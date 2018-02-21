@@ -1,0 +1,19 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "noImplicitAny": false,
+        "removeComments": false,
+        "preserveConstEnums": true,
+		"sourceMap": false,
+        "allowJs": true,
+        "target": "es2015",
+        "outDir": "dist"
+    },
+    "include": [
+        "src/server/**/*",
+        "src/game-core/**/*"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}

@@ -1,0 +1,23 @@
+{
+  "name": "meteos",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc -p .\\tsconfig-client.json && tsc -p .\\tsconfig-server.json",
+    "start": "node ./dist/server/server.js",
+    "full": "npm run build && npm run start"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/node": "^9.4.6",
+    "express": "^4.16.2",
+    "pixi.js": "^4.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "^9.4.6",
+    "@types/pixi.js": "^4.7.1"
+  }
+}
