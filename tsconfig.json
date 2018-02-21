@@ -7,11 +7,10 @@
 		"sourceMap": false,
         "allowJs": true,
         "target": "es2015",
-        "outDir": "public/js"
+        "outDir": "dist"
     },
     "include": [
-        "src/client/**/*",
-        "src/game-core/**/*"
+        "src/**/*"
     ],
     "exclude": [
         "node_modules"

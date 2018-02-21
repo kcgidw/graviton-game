@@ -1,44 +1,24 @@
-class YHitbox {
-	y: number;		// Bottom
-	height: number;
-	
-	constructor(y: number,height: number) {
-		this.y = y;
-	}
+import {YHitbox} from './YHitbox';
+import {BlockColor} from './BlockTypes';
+import {BoardColumn} from './Board';
 
-	top(): number {
-		return this.y + this.height;
-	}
-
-	collidesBelow(other: YHitbox): boolean {
-		if(this.y <= other.top()) {
-			return true;
-		}
-		// does NOT check if this is completely under 'other'
-		// within the scope of the game, that should be impossible
-		return false;
-	}
-
-	move(dist: number): void {
-		this.y += dist;
-	}
-}
-
-class BlockPhysics {
+// movement
+export class Block {
 	hitbox: YHitbox;
-	curVelocity: number;
+	curVelocity: number = -1;
+
+	color: BlockColor;
+
+	matchable: boolean = false;	// can block be matched with other blocks
 
 	constructor() {
-		this.hitbox = new YHitbox(1, 1);
-	}
-
- 	move(dist: number): void {
-		// if dist is negative, it's falling
-
-		// move all blocks above the same way
-
-		// if falling, ensure proper collision with any solids below
-	}
+		this.hitbox = new YHitbox(100, 10);
+		this.color = BlockColor.RED;
+    }
+    
+    step(): void {
+        this.hitbox.move(this.curVelocity);
+    }
 
 	isRising(): boolean {
 		return this.curVelocity > 0;
@@ -48,13 +28,5 @@ class BlockPhysics {
 	}
 	isStationary(): boolean {
 		return this.curVelocity === 0;
-	}
-}
-
-const blockTypes = ['NORMAL', 'ROCKET', 'GARBAGE'];
-const blockElements = ['RED', 'YELLOW', 'MINT', 'FOREST', 'BROWN', 'AQUA', 'PURPLE', 'PINK'];
-
-class Block extends BlockPhysics {
-	stationary: boolean;
-	snapped: boolean;		// is aligned to board grid
+    }
 }

@@ -1,6 +1,8 @@
 import * as express from 'express';
 import * as http from 'http';
 
+import {Board} from '../game-core/Board';
+
 const port = process.env.PORT || 3000;
 
 const app = express();
