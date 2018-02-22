@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "noImplicitAny": false,
+        "removeComments": false,
+        "preserveConstEnums": true,
+		"sourceMap": false,
+        "allowJs": true,
+        "target": "es2015",
+        "outDir": "dist/"
+    },
+    "include": [
+        "src/client/**/*"
+    ]
+}

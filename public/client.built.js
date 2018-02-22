@@ -73,7 +73,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const Board_1 = __webpack_require__(1); // TODO webpack to es5
 const BoardView_1 = __webpack_require__(5);
 let container = document.getElementById('game-container');
-let app = new PIXI.Application({ width: 100, height: 500 });
+let app = new PIXI.Application({ width: 360, height: 640 });
 container.appendChild(app.view);
 var board = new Board_1.Board();
 console.log(board);
@@ -227,6 +227,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 class BoardView {
     constructor(board, app) {
         this.blockSprites = new BlockSpriteRegistry();
+        // dimensions
+        this.bottom = 640 - 20;
+        this.top = 50;
+        this.left = 20;
+        this.right = 360 - 20;
         this.board = board;
         this.app = app;
     }
@@ -248,7 +253,7 @@ class BoardView {
         var spr = PIXI.Sprite.fromImage('assets/images/red.png');
         // TODO preload texture http://www.html5gamedevs.com/topic/16019-preload-all-textures/
         this.app.stage.addChild(spr);
-        var bs = new BlockSprite(block, spr);
+        var bs = new BlockSprite(this, block, spr);
         this.blockSprites.register(block, bs);
     }
     removeBlock(block) {
@@ -273,9 +278,9 @@ class BlockSpriteRegistry {
         return bs;
     }
 }
-exports.BlockSpriteRegistry = BlockSpriteRegistry;
 class BlockSprite {
-    constructor(block, sprite) {
+    constructor(view, block, sprite) {
+        this.view = view;
         this.block = block;
         this.sprite = sprite;
     }
@@ -286,7 +291,6 @@ class BlockSprite {
         this.sprite.destroy();
     }
 }
-exports.BlockSprite = BlockSprite;
 
 
 /***/ })

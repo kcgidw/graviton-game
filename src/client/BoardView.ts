@@ -7,6 +7,12 @@ export class BoardView {
 
     blockSprites: BlockSpriteRegistry = new BlockSpriteRegistry();
 
+    // dimensions
+    bottom: number = 640 - 20;
+    top: number = 50;
+    left: number = 20;
+    right: number = 360 - 20;
+
     constructor(board: Board, app: PIXI.Application) {
         this.board = board;
         this.app = app;
@@ -29,7 +35,7 @@ export class BoardView {
         var spr: PIXI.Sprite = PIXI.Sprite.fromImage('assets/images/red.png');
         // TODO preload texture http://www.html5gamedevs.com/topic/16019-preload-all-textures/
         this.app.stage.addChild(spr);
-        var bs = new BlockSprite(block, spr);
+        var bs = new BlockSprite(this, block, spr);
         this.blockSprites.register(block, bs);
     }
     removeBlock(block: Block): void {
@@ -38,7 +44,7 @@ export class BoardView {
     }
 }
 
-export class BlockSpriteRegistry {
+class BlockSpriteRegistry {
     map: any = {};
 
     constructor() {
@@ -59,10 +65,12 @@ export class BlockSpriteRegistry {
     }
 }
 
-export class BlockSprite {
+class BlockSprite {
     block: Block;
     sprite: PIXI.Sprite;
-    constructor(block: Block, sprite: PIXI.Sprite) {
+    view: BoardView;
+    constructor(view: BoardView, block: Block, sprite: PIXI.Sprite) {
+        this.view = view;
         this.block = block;
         this.sprite = sprite;
     }

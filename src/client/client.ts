@@ -2,7 +2,7 @@ import {Board} from '../game-core/Board';	// TODO webpack to es5
 import { BoardView } from './BoardView';
 
 let container = document.getElementById('game-container');
-let app = new PIXI.Application({width: 100, height: 500});
+let app = new PIXI.Application({width: 360, height: 640});
 container.appendChild(app.view);
 
 var board: Board = new Board();
