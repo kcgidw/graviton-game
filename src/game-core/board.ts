@@ -1,30 +1,30 @@
 import {Block} from './Block';
 import {BlockColor} from './BlockTypes';
+import {BoardView} from '../client/BoardView';
 
 export class Board {
 	numColumns: number = 7;
 	colors: BlockColor[] = [];
 	physics: PlanetPhysics;
-	columns: BoardColumn[] = [];
+	blocks: Block[][] = [];
 
-	constructor() {
+	view: BoardView;
+
+	constructor(boardView?: BoardView) {
 		for(let i=0; i<this.numColumns; i++) {
-			this.columns.push(new BoardColumn());
+			this.blocks[i] = [];
 		}
+		this.view = boardView;
+		
 		this.spawnBlock(0, 'blah');
 	}
 
 	step() {
-		this.columns.forEach((col) => {
-			col.step();
+		this.blocks.forEach((col) => {
+			col.forEach((block) => {
+				block.step();
+			});
 		});
-	}
-
-	getColumn(col: number): BoardColumn {
-		if(col < 0 || col > this.numColumns) {
-			throw 'Bad column #: ' + col;
-		}
-		return this.columns[col];
 	}
 
 	spawnBlockAtRandom(): void {
@@ -32,26 +32,10 @@ export class Board {
 	}
 
 	spawnBlock(colIdx: number, color: string): void {
-		var col: BoardColumn = this.getColumn(colIdx);
-		col.spawnBlock(color);
-	}
-}
-
-export class BoardColumn {
-	blocks: Block[] = [];
-	
-	constructor() {
-
-	}
-
-	step() {
-		this.blocks.forEach((block) => {
-			block.step();
-		})
-	}
-
-	spawnBlock(color: string): void {
-		this.blocks.push(new Block());
+		var col: Block[] = this.blocks[colIdx];
+		var blockIdx = col.length;
+		var block: Block = new Block(colIdx, blockIdx);
+		col.push(block);
 	}
 }
 

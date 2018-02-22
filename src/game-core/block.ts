@@ -1,9 +1,12 @@
 import {YHitbox} from './YHitbox';
 import {BlockColor} from './BlockTypes';
-import {BoardColumn} from './Board';
 
 // movement
 export class Block {
+	columnIdx: number;
+	blockIdx: number;
+	id: number;
+
 	hitbox: YHitbox;
 	curVelocity: number = -1;
 
@@ -11,7 +14,9 @@ export class Block {
 
 	matchable: boolean = false;	// can block be matched with other blocks
 
-	constructor() {
+	constructor(columnIdx, blockIdx) {
+		this.columnIdx = columnIdx;
+		this.blockIdx = blockIdx;
 		this.hitbox = new YHitbox(100, 10);
 		this.color = BlockColor.RED;
     }

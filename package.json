@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc && webpack ./dist/client/graviton-client.js ./public/client.built.js",
+    "build": "tsc && webpack ./dist/client/client.js ./public/client.built.js",
     "start": "node ./dist/server/server.js"
   },
   "author": "",
