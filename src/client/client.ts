@@ -11,8 +11,8 @@ console.log(board);
 var boardView: BoardView = new BoardView(board, app);
 
 function mainLoop(stamp?: any) {
-    board.step();
-    boardView.draw();
-    requestAnimationFrame(mainLoop);
+	board.step();
+	boardView.draw();
+	requestAnimationFrame(mainLoop);
 }
 mainLoop();

@@ -2,7 +2,7 @@
 export class YHitbox {
 	y: number;		// Bottom
 	height: number;
-	
+
 	constructor(y: number, height: number) {
 		this.y = y;
 	}

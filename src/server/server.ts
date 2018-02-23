@@ -11,6 +11,6 @@ app.use(express.static('public'));
 
 const httpServer = new http.Server(app);
 
-httpServer.listen(port, ()=>{
+httpServer.listen(port, () => {
 	console.log('Listening on port ' + port);
 });

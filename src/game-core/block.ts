@@ -19,11 +19,11 @@ export class Block {
 		this.blockIdx = blockIdx;
 		this.hitbox = new YHitbox(100, 10);
 		this.color = BlockColor.RED;
-    }
-    
-    step(): void {
-        this.hitbox.move(this.curVelocity);
-    }
+	}
+
+	step(): void {
+		this.hitbox.move(this.curVelocity);
+	}
 
 	isRising(): boolean {
 		return this.curVelocity > 0;
@@ -33,5 +33,5 @@ export class Block {
 	}
 	isStationary(): boolean {
 		return this.curVelocity === 0;
-    }
+	}
 }

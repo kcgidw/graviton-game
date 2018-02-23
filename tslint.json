@@ -1,0 +1,27 @@
+{
+    "defaultSeverity": "error",
+    "extends": [
+        "tslint:recommended",
+        "tslint-eslint-rules"
+    ],
+    "jsRules": {},
+    "rules": {
+        "quotemark": [false],
+        "semicolon": [true],
+        "ordered-imports": [false],
+        "no-dupe-args": [true],
+        "no-console": [false],
+        "no-var-keyword": [false],
+        "member-access": [false],
+        "prefer-const": [false],
+        "no-empty": {
+            "severity": "warn"
+        },
+        "max-classes-per-file": [false],
+        "indent": [true, "tabs"],
+        "ter-indent": [true, "tab"],
+        "whitespace": [true, "check-preblock"],
+        "no-trailing-whitespace": { "severity": "warn" }
+    },
+    "rulesDirectory": []
+}

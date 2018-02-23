@@ -3,9 +3,10 @@ import {BlockColor} from './BlockTypes';
 import {BoardView} from '../client/BoardView';
 
 export class Board {
-	numColumns: number = 7;
+	numRows: number = 12;
+	numColumns: number = 9;
 	colors: BlockColor[] = [];
-	physics: PlanetPhysics;
+	physics: IPlanetPhysics;
 	blocks: Block[][] = [];
 
 	view: BoardView;
@@ -15,7 +16,7 @@ export class Board {
 			this.blocks[i] = [];
 		}
 		this.view = boardView;
-		
+
 		this.spawnBlock(0, 'blah');
 	}
 
@@ -39,7 +40,7 @@ export class Board {
 	}
 }
 
-interface PlanetPhysics {
+interface IPlanetPhysics {
 	fallIV: number;
 	fallROC: number;
 

@@ -20,6 +20,8 @@
     "@types/node": "^9.4.6",
     "@types/pixi.js": "^4.7.1",
     "ts-loader": "^3.5.0",
+    "tslint": "^5.9.1",
+    "tslint-eslint-rules": "^5.0.0",
     "typescript": "^2.7.2",
     "webpack": "^3.11.0"
   }

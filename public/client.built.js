@@ -96,7 +96,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const Block_1 = __webpack_require__(2);
 class Board {
     constructor(boardView) {
-        this.numColumns = 7;
+        this.numRows = 12;
+        this.numColumns = 9;
         this.colors = [];
         this.blocks = [];
         for (let i = 0; i < this.numColumns; i++) {
