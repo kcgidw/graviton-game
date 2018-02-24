@@ -21,7 +21,8 @@
         "indent": [true, "tabs"],
         "ter-indent": [true, "tab"],
         "whitespace": [true, "check-preblock"],
-        "no-trailing-whitespace": { "severity": "warn" }
+        "no-trailing-whitespace": { "severity": "warn" },
+        "object-literal-sort-keys": [false]
     },
     "rulesDirectory": []
 }

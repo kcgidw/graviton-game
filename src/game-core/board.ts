@@ -1,30 +1,45 @@
 import {Block} from './Block';
 import {BlockColor} from './BlockTypes';
-import {BoardView} from '../client/BoardView';
+import {ClientFacade} from '../client/ClientFacade';
+import {Box2d} from './Box2d';
+
+/* TODO
+- Load a cache of block objects?
+*/
 
 export class Board {
+	dimensions: Box2d = new Box2d(0,0,360,640);
 	numRows: number = 12;
 	numColumns: number = 9;
 	colors: BlockColor[] = [];
 	physics: IPlanetPhysics;
 	blocks: Block[][] = [];
 
-	view: BoardView;
+	facade: ClientFacade;
 
-	constructor(boardView?: BoardView) {
+	constructor(facade?: ClientFacade) {
 		for(let i=0; i<this.numColumns; i++) {
-			this.blocks[i] = [];
+			this.blocks.push([]);
 		}
-		this.view = boardView;
+		this.facade = facade;
 
 		this.spawnBlock(0, 'blah');
 	}
 
-	step() {
+	forEachBlock(fn: (block: Block)=>any) {
 		this.blocks.forEach((col) => {
 			col.forEach((block) => {
-				block.step();
+				fn(block);
 			});
+		});
+	}
+
+	step() {
+		this.forEachBlock((block) => {
+			block.hitbox.top = block.hitbox.top + block.curVelocity;
+			if(block.hitbox.getBottom() > this.dimensions.getBottom()) {
+				block.hitbox.setBottom(this.dimensions.getBottom());
+			}
 		});
 	}
 

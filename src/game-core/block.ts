@@ -8,7 +8,7 @@ export class Block {
 	id: number;
 
 	hitbox: YHitbox;
-	curVelocity: number = -1;
+	curVelocity: number = 2;
 
 	color: BlockColor;
 
@@ -21,8 +21,12 @@ export class Block {
 		this.color = BlockColor.RED;
 	}
 
-	step(): void {
-		this.hitbox.move(this.curVelocity);
+	// step(): void {
+	// 	this.hitbox.move(this.curVelocity);
+	// }
+
+	setColor(blockColor: BlockColor) {
+		this.color = blockColor;
 	}
 
 	isRising(): boolean {

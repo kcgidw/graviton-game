@@ -23,6 +23,7 @@
     "tslint": "^5.9.1",
     "tslint-eslint-rules": "^5.0.0",
     "typescript": "^2.7.2",
+    "typescript-eslint-parser": "^14.0.0",
     "webpack": "^3.11.0"
   }
 }

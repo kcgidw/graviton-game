@@ -60,7 +60,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 0);
+/******/ 	return __webpack_require__(__webpack_require__.s = 1);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -70,20 +70,21 @@
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Board_1 = __webpack_require__(1); // TODO webpack to es5
-const BoardView_1 = __webpack_require__(5);
-let container = document.getElementById('game-container');
-let app = new PIXI.Application({ width: 360, height: 640 });
-container.appendChild(app.view);
-var board = new Board_1.Board();
-console.log(board);
-var boardView = new BoardView_1.BoardView(board, app);
-function mainLoop(stamp) {
-    board.step();
-    boardView.draw();
-    requestAnimationFrame(mainLoop);
+class Box2d {
+    constructor(top, left, height, width) {
+        this.top = top;
+        this.left = left;
+        this.height = height;
+        this.width = width;
+    }
+    getBottom() {
+        return this.top + this.height;
+    }
+    right() {
+        return this.left + this.width;
+    }
 }
-mainLoop();
+exports.Box2d = Box2d;
 
 
 /***/ }),
@@ -93,24 +94,60 @@ mainLoop();
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Block_1 = __webpack_require__(2);
+const Board_1 = __webpack_require__(2); // TODO webpack to es5
+const ClientFacade_1 = __webpack_require__(6);
+let container = document.getElementById('game-container');
+let app = new PIXI.Application({ width: 360, height: 640 });
+container.appendChild(app.view);
+var board = new Board_1.Board();
+console.log(board);
+var facade = new ClientFacade_1.ClientFacade(board, app);
+function mainLoop(stamp) {
+    board.step();
+    facade.draw();
+    requestAnimationFrame(mainLoop);
+}
+mainLoop();
+
+
+/***/ }),
+/* 2 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const Block_1 = __webpack_require__(3);
+const Box2d_1 = __webpack_require__(0);
+/* TODO
+- Load a cache of block objects?
+*/
 class Board {
-    constructor(boardView) {
+    constructor(facade) {
+        this.dimensions = new Box2d_1.Box2d(0, 0, 360, 640);
         this.numRows = 12;
         this.numColumns = 9;
         this.colors = [];
         this.blocks = [];
         for (let i = 0; i < this.numColumns; i++) {
-            this.blocks[i] = [];
+            this.blocks.push([]);
         }
-        this.view = boardView;
+        this.facade = facade;
         this.spawnBlock(0, 'blah');
     }
-    step() {
+    forEachBlock(fn) {
         this.blocks.forEach((col) => {
             col.forEach((block) => {
-                block.step();
+                fn(block);
             });
+        });
+    }
+    step() {
+        this.forEachBlock((block) => {
+            block.hitbox.top = block.hitbox.top + block.curVelocity;
+            if (block.hitbox.getBottom() > this.dimensions.getBottom()) {
+                block.hitbox.setBottom(this.dimensions.getBottom());
+            }
         });
     }
     spawnBlockAtRandom() {
@@ -127,26 +164,29 @@ exports.Board = Board;
 
 
 /***/ }),
-/* 2 */
+/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const YHitbox_1 = __webpack_require__(3);
-const BlockTypes_1 = __webpack_require__(4);
+const YHitbox_1 = __webpack_require__(4);
+const BlockTypes_1 = __webpack_require__(5);
 // movement
 class Block {
     constructor(columnIdx, blockIdx) {
-        this.curVelocity = -1;
+        this.curVelocity = 2;
         this.matchable = false; // can block be matched with other blocks
         this.columnIdx = columnIdx;
         this.blockIdx = blockIdx;
         this.hitbox = new YHitbox_1.YHitbox(100, 10);
         this.color = BlockTypes_1.BlockColor.RED;
     }
-    step() {
-        this.hitbox.move(this.curVelocity);
+    // step(): void {
+    // 	this.hitbox.move(this.curVelocity);
+    // }
+    setColor(blockColor) {
+        this.color = blockColor;
     }
     isRising() {
         return this.curVelocity > 0;
@@ -162,7 +202,7 @@ exports.Block = Block;
 
 
 /***/ }),
-/* 3 */
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -170,28 +210,38 @@ exports.Block = Block;
 Object.defineProperty(exports, "__esModule", { value: true });
 // position and collision
 class YHitbox {
-    constructor(y, height) {
-        this.y = y;
+    constructor(top, height) {
+        this.top = top;
+        this.height = height;
     }
-    top() {
-        return this.y + this.height;
+    getBottom() {
+        return this.top + this.height;
     }
     collidesBelow(other) {
-        if (this.y <= other.top()) {
+        if (this.getBottom() <= other.top) {
             return true;
         }
         // does NOT check if this is completely under 'other'
         return false;
     }
+    setY(y) {
+        this.top = y;
+        return this.top;
+    }
+    setBottom(y) {
+        y -= this.height;
+        return this.setY(y);
+    }
     move(dist) {
-        this.y += dist;
+        this.top += dist;
+        return this.top;
     }
 }
 exports.YHitbox = YHitbox;
 
 
 /***/ }),
-/* 4 */
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -219,74 +269,72 @@ exports.BlockType = BlockType;
 
 
 /***/ }),
-/* 5 */
+/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-class BoardView {
+const Box2d_1 = __webpack_require__(0);
+class ClientFacade {
     constructor(board, app) {
-        this.blockSprites = new BlockSpriteRegistry();
-        // dimensions
-        this.bottom = 640 - 20;
-        this.top = 50;
-        this.left = 20;
-        this.right = 360 - 20;
         this.board = board;
         this.app = app;
+        this.blockSprites = new BlockSpriteRegistry(this);
+        this.dimensions = new Box2d_1.Box2d(10, 10, 640, 360);
     }
     draw() {
         this.board.blocks.forEach((column) => {
             column.forEach((block) => {
-                let existing = this.blockSprites.get(block);
-                if (existing) {
-                    existing.draw();
+                let bs = this.blockSprites.get(block);
+                if (!bs) {
+                    bs = this.addBlock(block);
                 }
-                else {
-                    this.addBlock(block);
-                }
+                bs.updateSpritePosition();
             });
         });
-        console.log(this.board.blocks[0][0].hitbox.y);
+        console.log(this.board.blocks[0][0].hitbox.top);
     }
     addBlock(block) {
-        var spr = PIXI.Sprite.fromImage('assets/images/red.png');
+        let spr = PIXI.Sprite.fromImage('assets/images/red.png');
         // TODO preload texture http://www.html5gamedevs.com/topic/16019-preload-all-textures/
         this.app.stage.addChild(spr);
-        var bs = new BlockSprite(this, block, spr);
-        this.blockSprites.register(block, bs);
+        let bs = this.blockSprites.register(block, spr);
+        return bs;
     }
     removeBlock(block) {
-        var bs = this.blockSprites.deregister(block);
+        let bs = this.blockSprites.deregister(block);
         bs.destroy(); // TODO hide and reuse
     }
 }
-exports.BoardView = BoardView;
+exports.ClientFacade = ClientFacade;
 class BlockSpriteRegistry {
-    constructor() {
+    constructor(facade) {
         this.map = {};
+        this.facade = facade;
     }
     get(block) {
         return this.map[block.id];
     }
-    register(block, blockSprite) {
-        this.map[block.id] = blockSprite;
+    register(block, sprite) {
+        let bs = new BlockSprite(this.facade.dimensions, block, sprite);
+        this.map[block.id] = bs;
+        return bs;
     }
     deregister(block) {
-        var bs = this.get(block);
+        let bs = this.get(block);
         delete this.map[block.id];
         return bs;
     }
 }
 class BlockSprite {
-    constructor(view, block, sprite) {
-        this.view = view;
+    constructor(boardDimensions, block, sprite) {
+        this.boardDimensions = boardDimensions;
         this.block = block;
         this.sprite = sprite;
     }
-    draw() {
-        this.sprite.y = this.block.hitbox.y;
+    updateSpritePosition() {
+        this.sprite.y = this.block.hitbox.top;
     }
     destroy() {
         this.sprite.destroy();
