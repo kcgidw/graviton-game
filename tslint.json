@@ -22,7 +22,10 @@
         "ter-indent": [true, "tab"],
         "whitespace": [true, "check-preblock"],
         "no-trailing-whitespace": { "severity": "warn" },
-        "object-literal-sort-keys": [false]
+        "object-literal-sort-keys": [false],
+        "only-arrow-functions": [false],
+        "no-consecutive-blank-lines": [false],
+        "no-string-literal": [false]
     },
     "rulesDirectory": []
 }

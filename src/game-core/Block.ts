@@ -8,13 +8,13 @@ export class Block {
 	id: number;
 
 	hitbox: YHitbox;
-	curVelocity: number = 20;
+	curVelocity: number = 30;
 
 	color: BlockColor;
 
 	matchable: boolean = false;	// can block be matched with other blocks
 
-	constructor(columnIdx, blockIdx, id) {
+	constructor(columnIdx: number, blockIdx: number, id: number) {
 		this.columnIdx = columnIdx;
 		this.blockIdx = blockIdx;
 		this.hitbox = new YHitbox(0, 100);

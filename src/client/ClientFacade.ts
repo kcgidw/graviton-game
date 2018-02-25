@@ -26,10 +26,11 @@ export class ClientFacade {
 		});
 	}
 	addBlock(block: Block): BlockSprite {
-		let spr: PIXI.Sprite = PIXI.Sprite.fromImage('assets/images/red.png');
+		// blocksprite's sprite width will start as 0 if texture is loaded on demand,
+		// causing draw mistakes. Make sure your stuff is pre-loaded
+		let spr: PIXI.Sprite = new PIXI.Sprite(PIXI.loader.resources['red'].texture);
 		// TODO preload texture http://www.html5gamedevs.com/topic/16019-preload-all-textures/
 		this.app.stage.addChild(spr);
-		spr.x = block.columnIdx * spr.width;
 		let bs: BlockSprite = this.blockSprites.register(block, spr);
 		return bs;
 	}
@@ -52,7 +53,7 @@ class BlockSpriteRegistry {
 	}
 
 	register(block: Block, sprite: PIXI.Sprite): BlockSprite {
-		let bs = new BlockSprite(this.facade.board.dimensions, block, sprite);
+		let bs = new BlockSprite(this.facade.board, block, sprite);
 		this.map[block.id] = bs;
 		return bs;
 	}
@@ -66,15 +67,19 @@ class BlockSpriteRegistry {
 class BlockSprite {
 	block: Block;
 	sprite: PIXI.Sprite;
-	boardDimensions: Box2d;
+	board: Board;
+	debugId: PIXI.Text;
 
-	constructor(boardDimensions: Box2d, block: Block, sprite: PIXI.Sprite) {
-		this.boardDimensions = boardDimensions;
+	constructor(board: Board, block: Block, sprite: PIXI.Sprite) {
+		this.board = board;
 		this.block = block;
 		this.sprite = sprite;
+		this.sprite.x = this.block.columnIdx * this.sprite.width;
+		this.debugId = new PIXI.Text(block.id+' '+block.columnIdx, {fill: '#ffffff'});
 	}
 	updateSpritePosition(y: number) {
 		this.sprite.y = y;
+		this.sprite.addChild(this.debugId);
 	}
 	destroy() {
 		this.sprite.destroy();

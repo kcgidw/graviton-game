@@ -11,16 +11,20 @@ import { YHitbox } from './YHitbox';
 export class Board {
 	dimensions: Box2d = new Box2d(0,0,1280,720);
 	numRows: number = 12;
-	numColumns: number = 4; // 9;
+	numColumns: number = 9;
 	colors: BlockColor[] = [];
 	physics: IPlanetPhysics;
 
 	ground: YHitbox;
 	blocks: Block[][] = [];
 
+	spawnInterval: number = 0.4 * 1000;
+
 	facade: ClientFacade;
 
 	blockId: number = 0;
+
+	tick: number = 0;
 
 	constructor(facade?: ClientFacade) {
 		for(let i=0; i<this.numColumns; i++) {
@@ -29,8 +33,6 @@ export class Board {
 		this.facade = facade;
 
 		this.ground = new YHitbox(this.dimensions.getBottom(), 100);
-
-		this.spawnerProcess();
 	}
 
 	forEachBlock(fn: (block: Block, idx: number)=>any) {
@@ -42,6 +44,10 @@ export class Board {
 	}
 
 	step() {
+		if(this.tick === 0) {
+			this.spawnerProcess();
+		}
+
 		this.forEachBlock((block, idx) => {
 			block.hitbox.top = block.hitbox.top + block.curVelocity;
 
@@ -54,6 +60,12 @@ export class Board {
 				}
 			}
 		});
+
+		// if(this.tick % 100 === 0) {
+		// 	this.spawnBlock(this.getRandomColumnIdx(), BlockColor.RED);
+		// }
+
+		this.tick++;
 	}
 
 	// Returns the next block under this one, even if they aren't in contact
@@ -78,10 +90,10 @@ export class Board {
 		console.log(this);
 	}
 	spawnerProcess(): void {
-		this.spawnBlock(this.getRandomColumnIdx(), BlockColor.RED);
+		this.spawnBlock(this.blockId === 0 ? 2 : this.getRandomColumnIdx(), BlockColor.RED);
 		setTimeout(() => {
 			this.spawnerProcess();
-		}, 0.5* 1000);
+		}, this.spawnInterval);
 	}
 }
 
