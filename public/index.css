@@ -4,7 +4,7 @@ body {
 #content {
 	text-align: center;
 }
-#game-container {
+#game-wrapper {
 	width: auto;
 	margin: auto;
 	display: inline-block;

@@ -5,6 +5,9 @@ import {Box2d} from '../game-core/Box2d';
 export class ClientFacade {
 	board: Board;
 	app: PIXI.Application;
+	boardContainer: PIXI.Container;
+	blocksContainer: PIXI.Container;
+	backdropContainer: PIXI.Container;
 
 	blockSprites: BlockSpriteRegistry;
 
@@ -12,6 +15,33 @@ export class ClientFacade {
 		this.board = board;
 		this.app = app;
 		this.blockSprites = new BlockSpriteRegistry(this);
+
+		this.boardContainer = this.app.stage.addChild(new PIXI.Container());
+		this.backdropContainer = this.boardContainer.addChild(new PIXI.Container());
+		this.blocksContainer = this.boardContainer.addChild(new PIXI.Container());
+
+		let targetBoardWidthRatio = 0.9;
+
+		let tileWidth = PIXI.loader.resources['red'].texture.width * this.app.stage.scale.x;
+		let baseBoardWidth = tileWidth * this.board.numColumns;
+		let targetBoardWidth = this.app.renderer.width * targetBoardWidthRatio;
+		let scale = targetBoardWidth / baseBoardWidth;
+		this.blocksContainer.scale = new PIXI.Point(scale, scale);
+
+		let logicW = this.board.dimensions.width;
+		let logicH = this.board.dimensions.height;
+		targetBoardWidth = logicW * targetBoardWidthRatio;
+		let targetBoardHeight = logicH * targetBoardWidthRatio;
+		let xMargin = (logicW - targetBoardWidth) / 2;
+		let yMargin = (logicH - targetBoardHeight) / 2;
+		let graphics = new PIXI.Graphics();
+		graphics.beginFill(0x323333, 1);
+		graphics.drawRect(xMargin, yMargin, targetBoardWidth, targetBoardHeight);
+		graphics.endFill();
+		this.backdropContainer.addChild(graphics);
+
+		this.blocksContainer.x = xMargin;
+		this.blocksContainer.y = yMargin;
 	}
 
 	draw(): void {
@@ -30,7 +60,7 @@ export class ClientFacade {
 		// causing draw mistakes. Make sure your stuff is pre-loaded
 		let spr: PIXI.Sprite = new PIXI.Sprite(PIXI.loader.resources['red'].texture);
 		// TODO preload texture http://www.html5gamedevs.com/topic/16019-preload-all-textures/
-		this.app.stage.addChild(spr);
+		this.blocksContainer.addChild(spr);
 		let bs: BlockSprite = this.blockSprites.register(block, spr);
 		return bs;
 	}
