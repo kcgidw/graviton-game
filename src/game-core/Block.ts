@@ -14,11 +14,11 @@ export class Block {
 
 	matchable: boolean = false;	// can block be matched with other blocks
 
-	constructor(columnIdx: number, blockIdx: number, id: number) {
+	constructor(columnIdx: number, blockIdx: number, color: BlockColor, id: number) {
 		this.columnIdx = columnIdx;
 		this.blockIdx = blockIdx;
 		this.hitbox = new YHitbox(0, 100);
-		this.color = BlockColor.RED;
+		this.color = color;
 		this.id = id;
 	}
 

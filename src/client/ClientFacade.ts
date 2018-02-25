@@ -1,6 +1,7 @@
 import {Board} from '../game-core/Board';
 import {Block} from '../game-core/Block';
 import {Box2d} from '../game-core/Box2d';
+import {BlockColor, colorToFilename} from '../game-core/BlockTypes';
 
 export class ClientFacade {
 	board: Board;
@@ -22,7 +23,7 @@ export class ClientFacade {
 
 		let targetBoardWidthRatio = 0.9;
 
-		let tileWidth = PIXI.loader.resources['red'].texture.width * this.app.stage.scale.x;
+		let tileWidth = PIXI.loader.resources[colorToFilename(BlockColor.RED)].texture.width * this.app.stage.scale.x;
 		let baseBoardWidth = tileWidth * this.board.numColumns;
 		let targetBoardWidth = this.app.renderer.width * targetBoardWidthRatio;
 		let scale = targetBoardWidth / baseBoardWidth;
@@ -58,7 +59,7 @@ export class ClientFacade {
 	addBlock(block: Block): BlockSprite {
 		// blocksprite's sprite width will start as 0 if texture is loaded on demand,
 		// causing draw mistakes. Make sure your stuff is pre-loaded
-		let spr: PIXI.Sprite = new PIXI.Sprite(PIXI.loader.resources['red'].texture);
+		let spr: PIXI.Sprite = new PIXI.Sprite(PIXI.loader.resources[colorToFilename(block.color)].texture);
 		// TODO preload texture http://www.html5gamedevs.com/topic/16019-preload-all-textures/
 		this.blocksContainer.addChild(spr);
 		let bs: BlockSprite = this.blockSprites.register(block, spr);

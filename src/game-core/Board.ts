@@ -79,18 +79,18 @@ export class Board {
 	}
 
 	getRandomColumnIdx(): number {
-		let idx =  Math.floor(Math.random() * this.numColumns);
+		let idx = rand(0, this.numColumns - 1);
 		return idx;
 	}
 	spawnBlock(colIdx: number, color: BlockColor): void {
 		var col: Block[] = this.blocks[colIdx];
 		var blockIdx = col.length;
-		var block: Block = new Block(colIdx, blockIdx, this.blockId++);
+		var block: Block = new Block(colIdx, blockIdx, color, this.blockId++);
 		col.push(block);
 		console.log(this);
 	}
 	spawnerProcess(): void {
-		this.spawnBlock(this.blockId === 0 ? 2 : this.getRandomColumnIdx(), BlockColor.RED);
+		this.spawnBlock(this.blockId === 0 ? 2 : this.getRandomColumnIdx(), rand(0, 7));
 		setTimeout(() => {
 			this.spawnerProcess();
 		}, this.spawnInterval);
@@ -108,4 +108,10 @@ interface IPlanetPhysics {
 	launchFinal: number;		// final velocity (falling)
 
 	descentV: number;		// rocket descent velocity. no ROC
+}
+
+function rand(from: number, to: number) {
+	var range = to - from;
+	var tmp = Math.floor(Math.random() * (range + 1));
+	return from + tmp;
 }

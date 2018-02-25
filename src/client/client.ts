@@ -20,8 +20,11 @@ PIXI.loader
 	.add('red',		'assets/images/red.png')
 	.add('yellow',	'assets/images/yellow.png')
 	.add('mint',	'assets/images/mint.png')
+	.add('forest',	'assets/images/forest.png')
 	.add('aqua',	'assets/images/aqua.png')
 	.add('purple',	'assets/images/purple.png')
+	.add('brown',	'assets/images/brown.png')
+	.add('pink',	'assets/images/pink.png')
 	.load(()=> {
 		var facade: ClientFacade = new ClientFacade(board, app);
 
