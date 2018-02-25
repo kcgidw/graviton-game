@@ -13,7 +13,7 @@ export class YHitbox {
 	}
 
 	collidesBelow(other: YHitbox): boolean {
-		if(this.getBottom() <= other.top) {
+		if(this.getBottom() >= other.top) {
 			return true;
 		}
 		// does NOT check if this is completely under 'other'
@@ -31,5 +31,12 @@ export class YHitbox {
 	move(dist: number): number {
 		this.top += dist;
 		return this.top;
+	}
+	moveToContact(other: YHitbox): number {
+		if(this.collidesBelow(other)) {
+			let dist = other.top - this.getBottom();
+			return this.move(dist);
+		}
+		return undefined;
 	}
 }

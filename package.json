@@ -5,7 +5,7 @@
   "main": "",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc && webpack ./dist/client/client.js ./public/client.built.js",
+    "build": "webpack",
     "start": "node ./dist/server/server.js"
   },
   "author": "",
@@ -25,6 +25,7 @@
     "tslint-eslint-rules": "^5.0.0",
     "typescript": "^2.7.2",
     "typescript-eslint-parser": "^14.0.0",
-    "webpack": "^3.11.0"
+    "webpack": "^3.11.0",
+    "webpack-dev-server": "^2.11.1"
   }
 }

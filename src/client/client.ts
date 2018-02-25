@@ -11,7 +11,7 @@ let app = new PIXI.Application({width: logicWidth, height: logicHeight});
 // app.renderer.autoResize = true;
 
 // scale the pixi app and its stage
-let scale = 0.4;
+let scale = 0.5;
 app.renderer.resize(logicWidth * scale, logicHeight * scale);
 app.stage.scale = new PIXI.Point(scale, scale);
 

@@ -24,12 +24,12 @@ export class ClientFacade {
 				bs.updateSpritePosition(block.hitbox.top);
 			});
 		});
-		console.log(this.board.blocks[0][0].hitbox.top);
 	}
 	addBlock(block: Block): BlockSprite {
 		let spr: PIXI.Sprite = PIXI.Sprite.fromImage('assets/images/red.png');
 		// TODO preload texture http://www.html5gamedevs.com/topic/16019-preload-all-textures/
 		this.app.stage.addChild(spr);
+		spr.x = block.columnIdx * spr.width;
 		let bs: BlockSprite = this.blockSprites.register(block, spr);
 		return bs;
 	}
