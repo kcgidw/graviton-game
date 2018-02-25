@@ -8,7 +8,7 @@ import {Box2d} from './Box2d';
 */
 
 export class Board {
-	dimensions: Box2d = new Box2d(0,0,360,640);
+	dimensions: Box2d = new Box2d(0,0,1280,720);
 	numRows: number = 12;
 	numColumns: number = 9;
 	colors: BlockColor[] = [];

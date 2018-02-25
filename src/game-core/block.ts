@@ -8,7 +8,7 @@ export class Block {
 	id: number;
 
 	hitbox: YHitbox;
-	curVelocity: number = 2;
+	curVelocity: number = 20;
 
 	color: BlockColor;
 
@@ -17,7 +17,7 @@ export class Block {
 	constructor(columnIdx, blockIdx) {
 		this.columnIdx = columnIdx;
 		this.blockIdx = blockIdx;
-		this.hitbox = new YHitbox(100, 10);
+		this.hitbox = new YHitbox(0, 100);
 		this.color = BlockColor.RED;
 	}
 

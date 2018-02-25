@@ -8,13 +8,10 @@ export class ClientFacade {
 
 	blockSprites: BlockSpriteRegistry;
 
-	dimensions: Box2d;
-
 	constructor(board: Board, app: PIXI.Application) {
 		this.board = board;
 		this.app = app;
 		this.blockSprites = new BlockSpriteRegistry(this);
-		this.dimensions = new Box2d(10, 10, 640, 360);
 	}
 
 	draw(): void {
@@ -24,7 +21,7 @@ export class ClientFacade {
 				if(!bs) {
 					bs = this.addBlock(block);
 				}
-				bs.updateSpritePosition();
+				bs.updateSpritePosition(block.hitbox.top);
 			});
 		});
 		console.log(this.board.blocks[0][0].hitbox.top);
@@ -55,7 +52,7 @@ class BlockSpriteRegistry {
 	}
 
 	register(block: Block, sprite: PIXI.Sprite): BlockSprite {
-		let bs = new BlockSprite(this.facade.dimensions, block, sprite);
+		let bs = new BlockSprite(this.facade.board.dimensions, block, sprite);
 		this.map[block.id] = bs;
 		return bs;
 	}
@@ -76,8 +73,8 @@ class BlockSprite {
 		this.block = block;
 		this.sprite = sprite;
 	}
-	updateSpritePosition() {
-		this.sprite.y = this.block.hitbox.top;
+	updateSpritePosition(y: number) {
+		this.sprite.y = y;
 	}
 	destroy() {
 		this.sprite.destroy();

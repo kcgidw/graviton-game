@@ -19,6 +19,7 @@
   "devDependencies": {
     "@types/node": "^9.4.6",
     "@types/pixi.js": "^4.7.1",
+    "source-map-loader": "^0.2.3",
     "ts-loader": "^3.5.0",
     "tslint": "^5.9.1",
     "tslint-eslint-rules": "^5.0.0",

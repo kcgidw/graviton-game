@@ -1,8 +1,11 @@
 body {
 	background-color: #dec;
 }
-
+#content {
+	text-align: center;
+}
 #game-container {
-	width: 360px;
+	width: auto;
 	margin: auto;
+	display: inline-block;
 }
