@@ -1,10 +1,16 @@
-import {Board} from '../game-core/Board';	// TODO webpack to es5
+import {Board, BOARD_DIMENSIONS} from '../game-core/Board';	// TODO webpack to es5
 import { ClientFacade } from './ClientFacade';
+import { Round } from '../game-core/Round';
+import {BlockColor} from '../game-core/BlockTypes';
+import {Planet} from '../game-core/Planet';
 
-const fps = 30;
-var board: Board = new Board(fps);
-var logicWidth = board.dimensions.width;
-var logicHeight = board.dimensions.height;
+var fps = 30;
+var logicWidth = BOARD_DIMENSIONS.width;
+var logicHeight = BOARD_DIMENSIONS.height;
+
+var game = new Round(fps);
+var board: Board;
+var facade: ClientFacade;
 
 let app = new PIXI.Application({width: logicWidth, height: logicHeight});
 // app.renderer.autoResize = true;
@@ -18,29 +24,48 @@ let container = document.getElementById('game-wrapper');
 container.appendChild(app.view)
 	.setAttribute('id', 'game-app');
 
-var facade: ClientFacade;
 var now: number;
 var lastTime: number;
 var delta: number = 0;		// elapsed time
-const gameStepInterval = 1000/fps;
-const maxCatchup = 1000 * 1000;	// cap on catchup steps
+const gameStepInterval: number = 1000 / fps;
+const maxCatchup: number = 3 * 1000;	// cap on catchup steps
 
 function mainStep() {
 	now = timestamp();
 	delta += now - lastTime;
-	// delta = delta > maxCatchup ? maxCatchup : delta;
+	if(delta > 1000) {
+		console.log(delta);
+	}
+	delta = delta > maxCatchup ? maxCatchup : delta;
 
+	let numSteps = 0;
 	while(delta > gameStepInterval) {
 		// when enough time has elapsed, trigger game step(s)
 		// console.log(delta, gameStepInterval);
-		board.step(delta);
+		board.step();
 		delta -= gameStepInterval;
+		numSteps++;
 	}
+	console.log(numSteps);
 
 	facade.draw();
 
 	lastTime = now;
 	requestAnimationFrame(mainStep);
+}
+
+function beginRound() {
+	board = game.createBoard(new Planet({}, {
+		RED: 5,
+		FOREST: 5,
+		AQUA: 5,
+		YELLOW: 3,
+		PINK: 2,
+	}));
+	facade = new ClientFacade(board, app);
+	board.setFacade(facade);
+	lastTime = timestamp();
+	mainStep();
 }
 
 PIXI.loader
@@ -52,12 +77,7 @@ PIXI.loader
 	.add('purple',	'assets/images/purple.png')
 	.add('brown',	'assets/images/brown.png')
 	.add('pink',	'assets/images/pink.png')
-	.load(()=> {
-		// begin game
-		facade = new ClientFacade(board, app);
-		lastTime = timestamp();
-		mainStep();
-	});
+	.load(beginRound);
 
 function timestamp(): number {
 	return window.performance && window.performance.now ? window.performance.now() : new Date().getTime();
