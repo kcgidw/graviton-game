@@ -39,4 +39,7 @@ export class Block {
 	isStationary(): boolean {
 		return this.curVelocity === 0;
 	}
+
+	// getSittingOn(): Block {}
+	// getSittingAbove(): Block {}
 }
