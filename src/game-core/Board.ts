@@ -48,7 +48,7 @@ export class Board {
 
 		this.ground = new YHitbox(this.dimensions.getBottom(), 100);
 
-		let spawnerInterval = 1 * 1000;
+		let spawnerInterval = 0.4 * 1000;
 		this.spawner = new Timer(this, () => {
 			this.spawnBlockRandom();
 		}, spawnerInterval, true).start();

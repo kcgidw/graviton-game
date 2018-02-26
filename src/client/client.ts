@@ -33,9 +33,6 @@ const maxCatchup: number = 3 * 1000;	// cap on catchup steps
 function mainStep() {
 	now = timestamp();
 	delta += now - lastTime;
-	if(delta > 1000) {
-		console.log(delta);
-	}
 	delta = delta > maxCatchup ? maxCatchup : delta;
 
 	let numSteps = 0;
@@ -46,7 +43,6 @@ function mainStep() {
 		delta -= gameStepInterval;
 		numSteps++;
 	}
-	console.log(numSteps);
 
 	facade.draw();
 
@@ -56,10 +52,10 @@ function mainStep() {
 
 function beginRound() {
 	board = game.createBoard(new Planet({}, {
-		RED: 5,
-		FOREST: 5,
-		AQUA: 5,
-		YELLOW: 3,
+		RED: 6,
+		YELLOW: 5,
+		PURPLE: 5,
+		MINT: 2,
 		PINK: 2,
 	}));
 	facade = new ClientFacade(board, app);

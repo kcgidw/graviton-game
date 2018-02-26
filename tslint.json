@@ -25,7 +25,8 @@
         "object-literal-sort-keys": [false],
         "only-arrow-functions": [false],
         "no-consecutive-blank-lines": [false],
-        "no-string-literal": [false]
+        "no-string-literal": [false],
+        "object-literal-shorthand": [false]
     },
     "rulesDirectory": []
 }
