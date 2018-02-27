@@ -31,7 +31,7 @@ export class ClientFacade {
 
 		let logicW = this.board.dimensions.width;
 		let logicH = this.board.dimensions.height;
-		targetBoardWidth = logicW * targetBoardWidthRatio;
+		// targetBoardWidth = logicW * targetBoardWidthRatio;
 		let targetBoardHeight = logicH * targetBoardWidthRatio;
 		let xMargin = (logicW - targetBoardWidth) / 2;
 		let yMargin = (logicH - targetBoardHeight) / 2;
@@ -56,6 +56,7 @@ export class ClientFacade {
 			});
 		});
 	}
+
 	addBlock(block: Block): BlockSprite {
 		// blocksprite's sprite width will start as 0 if texture is loaded on demand,
 		// causing draw mistakes. Make sure your stuff is pre-loaded

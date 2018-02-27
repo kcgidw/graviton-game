@@ -1,11 +1,13 @@
 body {
 	background-color: #dec;
+	margin: 0px;
 }
 #content {
 	text-align: center;
 }
 #game-wrapper {
 	width: auto;
+	height: auto;
 	margin: auto;
 	display: inline-block;
 }

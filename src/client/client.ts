@@ -16,9 +16,28 @@ let app = new PIXI.Application({width: logicWidth, height: logicHeight});
 // app.renderer.autoResize = true;
 
 // scale the pixi app and its stage
-let scale = 0.4;
-app.renderer.resize(logicWidth * scale, logicHeight * scale);
+const gameScreenRatio = logicWidth / logicHeight;
+let scale = 0.6;
 app.stage.scale = new PIXI.Point(scale, scale);
+function resizeRenderer() {
+	// TODO reimplement: https://webglfundamentals.org/webgl/lessons/webgl-anti-patterns.html
+	let clientW = window.innerWidth;
+	let clientH = window.innerHeight;
+	let w, h;
+
+	if (clientW / clientH >= gameScreenRatio) {
+		w = clientH * gameScreenRatio;
+		h = clientH;
+	} else {
+		w = clientW;
+		h = clientW / gameScreenRatio;
+	}
+
+	app.renderer.view.style.width = w + 'px';
+	app.renderer.view.style.height = h + 'px';
+}
+resizeRenderer();
+window.onresize = resizeRenderer;
 
 let container = document.getElementById('game-wrapper');
 container.appendChild(app.view)
@@ -44,19 +63,19 @@ function mainStep() {
 		numSteps++;
 	}
 
-	facade.draw();
+	requestAnimationFrame(mainStep);
 
 	lastTime = now;
-	requestAnimationFrame(mainStep);
+	facade.draw();
 }
 
 function beginRound() {
 	board = game.createBoard(new Planet({}, {
-		RED: 6,
-		YELLOW: 5,
-		PURPLE: 5,
-		MINT: 2,
-		PINK: 2,
+		YELLOW: 28,
+		RED: 25,
+		PURPLE: 25,
+		PINK: 12,
+		MINT: 10,
 	}));
 	facade = new ClientFacade(board, app);
 	board.setFacade(facade);

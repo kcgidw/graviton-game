@@ -1,5 +1,5 @@
 import { BlockColor, strToColor } from "./BlockTypes";
-import { randInt } from "../util";
+import { randInt,rand } from "../util";
 import { Block } from "./Block";
 
 interface IDistribArrItem {
@@ -33,7 +33,7 @@ export class Planet {
 	}
 
 	getRandomColor(): BlockColor {
-		let rng = randInt(0,this.distribSum);
+		let rng = rand(0,this.distribSum);
 		let colorIdx = 0;
 		// console.log('rng ' + rng);
 		for(; colorIdx < this.distribArr.length; colorIdx++) {
