@@ -9,6 +9,8 @@ interface IDistribArrItem {
 }
 
 export class Planet {
+	numColumns: number;
+
 	physics: any;
 
 	inputDistrib: any;
@@ -16,9 +18,10 @@ export class Planet {
 	colors: BlockColor[] = [];
 	distribSum: number;
 
-	constructor(physics: any, distributions: any) {
-		this.physics = physics;
-		this.inputDistrib = distributions;
+	constructor(data: any) {
+		this.numColumns = data.columns;
+		this.physics = data.physics;
+		this.inputDistrib = data.colors;
 
 		this.distribSum = 0;
 		Object.keys(this.inputDistrib).forEach((colorStr) => {

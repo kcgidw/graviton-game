@@ -3,7 +3,6 @@ import {BlockColor,COLORS} from './BlockTypes';
 import {ClientFacade} from '../client/ClientFacade';
 import {Box2d} from './Box2d';
 import { YHitbox } from './YHitbox';
-import { timingSafeEqual } from 'crypto';
 import { Round } from './Round';
 import { Planet } from './Planet';
 import { randInt } from '../util';
@@ -12,15 +11,15 @@ import { randInt } from '../util';
 - Load a cache of block objects?
 */
 
-export const BOARD_DIMENSIONS: Box2d = new Box2d(0,0,1280,720);
+const blockHeight = 100;
 
 export class Board {
 	engine: Round;
 
 	planet: Planet;
-	dimensions: Box2d = BOARD_DIMENSIONS;
+	dimensions: Box2d;
 	numRows: number = 12;
-	numColumns: number = 9;
+	numColumns: number;
 	colors: BlockColor[] = [];
 	physics: IPlanetPhysics;
 
@@ -40,6 +39,8 @@ export class Board {
 	constructor(engine: Round, planet: Planet, facade?: ClientFacade) {
 		this.engine = engine;
 		this.planet = planet;
+		this.numColumns = this.planet.numColumns;
+		this.dimensions = new Box2d(0, 0, this.numRows * blockHeight, this.numColumns * blockHeight);
 
 		for(let i=0; i<this.numColumns; i++) {
 			this.blocks.push([]);
@@ -52,6 +53,8 @@ export class Board {
 		this.spawner = new Timer(this, () => {
 			this.spawnBlockRandom();
 		}, spawnerInterval, true).start();
+
+		console.log(this);
 	}
 
 	forEachBlock(fn: (block: Block, idx: number)=>any) {
@@ -64,6 +67,10 @@ export class Board {
 
 	step() {
 		this.time += this.engine.stepInterval;
+
+		if(this.blockId > 100) {
+			return;
+		}
 
 		this.forEachBlock((block, idx) => {
 

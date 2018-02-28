@@ -3,6 +3,8 @@ import {Block} from '../game-core/Block';
 import {Box2d} from '../game-core/Box2d';
 import {BlockColor, colorToFilename} from '../game-core/BlockTypes';
 
+const targetBoardWidthRatio = 0.95;		// ratio of board width to canvas width
+
 export class ClientFacade {
 	board: Board;
 	app: PIXI.Application;
@@ -21,28 +23,35 @@ export class ClientFacade {
 		this.backdropContainer = this.boardContainer.addChild(new PIXI.Container());
 		this.blocksContainer = this.boardContainer.addChild(new PIXI.Container());
 
-		let targetBoardWidthRatio = 0.9;
-
-		let tileWidth = PIXI.loader.resources[colorToFilename(BlockColor.RED)].texture.width * this.app.stage.scale.x;
-		let baseBoardWidth = tileWidth * this.board.numColumns;
-		let targetBoardWidth = this.app.renderer.width * targetBoardWidthRatio;
-		let scale = targetBoardWidth / baseBoardWidth;
-		this.blocksContainer.scale = new PIXI.Point(scale, scale);
-
-		let logicW = this.board.dimensions.width;
-		let logicH = this.board.dimensions.height;
-		// targetBoardWidth = logicW * targetBoardWidthRatio;
-		let targetBoardHeight = logicH * targetBoardWidthRatio;
-		let xMargin = (logicW - targetBoardWidth) / 2;
-		let yMargin = (logicH - targetBoardHeight) / 2;
 		let graphics = new PIXI.Graphics();
 		graphics.beginFill(0x323333, 1);
-		graphics.drawRect(xMargin, yMargin, targetBoardWidth, targetBoardHeight);
+		graphics.drawRect(0, 0, this.board.dimensions.width, this.board.dimensions.height);
 		graphics.endFill();
 		this.backdropContainer.addChild(graphics);
 
-		this.blocksContainer.x = xMargin;
-		this.blocksContainer.y = yMargin;
+		// this.blocksContainer.x = xMargin;
+		// this.blocksContainer.y = yMargin;
+
+		this.resizeBoard();
+
+		console.log(this.boardContainer);
+	}
+
+	resizeBoard(): void {
+		var canvasW = this.app.renderer.view.width;
+		var canvasH = this.app.renderer.view.height;
+		var logicW = this.board.dimensions.width;
+		var logicH = this.board.dimensions.height;
+		var scale = (canvasW * targetBoardWidthRatio) / logicW;
+		this.boardContainer.scale = new PIXI.Point(scale, scale);
+		console.log('SCALE '+scale);
+		console.log(this.boardContainer.scale.x + ' ' + this.app.stage.scale.x);
+
+		// reposition board
+		var leftMargin = (canvasW - this.boardContainer.width) / 2;
+		var topMargin = (canvasH - this.boardContainer.height) / 2;
+		this.boardContainer.x = leftMargin;
+		this.boardContainer.y = topMargin;
 	}
 
 	draw(): void {
