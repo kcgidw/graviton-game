@@ -1,5 +1,5 @@
 import {Block} from './Block';
-import {BlockColor,COLORS} from './BlockTypes';
+import {BlockColor, COLORS} from './BlockColor';
 import {ClientFacade} from '../client/ClientFacade';
 import {Box2d} from './Box2d';
 import { YHitbox } from './YHitbox';

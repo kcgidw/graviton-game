@@ -1,4 +1,4 @@
-import { BlockColor, strToColor } from "./BlockTypes";
+import { BlockColor, strToColor } from "./BlockColor";
 import { randInt,rand } from "../util";
 import { Block } from "./Block";
 

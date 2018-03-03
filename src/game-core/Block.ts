@@ -1,5 +1,5 @@
 import {YHitbox} from './YHitbox';
-import {BlockColor} from './BlockTypes';
+import {BlockColor} from './BlockColor';
 
 // movement
 export class Block {

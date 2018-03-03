@@ -3,9 +3,11 @@ enum BlockColor {
 }
 
 const COLORS: string[] = ['RED', 'YELLOW', 'MINT', 'FOREST', 'AQUA', 'PURPLE', 'PINK', 'BROWN'];
+
 function colorToFilename(color: BlockColor): string {
 	return COLORS[color].toLowerCase();
 }
+
 function strToColor(str: string): BlockColor {
 	var res = BlockColor[str];
 	if(res === undefined) {
@@ -14,12 +16,7 @@ function strToColor(str: string): BlockColor {
 	return res;
 }
 
-enum BlockType {
-	NORMAL, ROCKET, GARBAGE,
-}
-
-export {BlockColor, BlockType, COLORS, colorToFilename, strToColor};
-
+export {BlockColor, COLORS, colorToFilename, strToColor};
 
 // const BlockColorMap = {
 // 	RED: 1,

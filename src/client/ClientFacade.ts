@@ -1,7 +1,7 @@
 import {Board} from '../game-core/Board';
 import {Block} from '../game-core/Block';
 import {Box2d} from '../game-core/Box2d';
-import {BlockColor, colorToFilename} from '../game-core/BlockTypes';
+import {BlockColor, colorToFilename} from '../game-core/BlockColor';
 
 const targetBoardWidthRatio = 0.95;		// ratio of board width to canvas width
 
@@ -115,7 +115,10 @@ class BlockSprite {
 		this.board = board;
 		this.block = block;
 		this.sprite = sprite;
+
 		this.sprite.x = this.block.columnIdx * this.sprite.width;
+		this.sprite.interactive = true;
+
 		this.debugId = new PIXI.Text(block.id+' '+block.columnIdx, {fill: '#ffffff'});
 	}
 	updateSpritePosition(y: number) {
