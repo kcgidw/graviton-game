@@ -119,7 +119,14 @@ class BlockSprite {
 		this.sprite.x = this.block.columnIdx * this.sprite.width;
 		this.sprite.interactive = true;
 
-		this.debugId = new PIXI.Text(block.id+' '+block.columnIdx, {fill: '#ffffff'});
+		// debug text
+		this.debugId = new PIXI.Text(block.id + '', {fill: '#ffffff'});
+		var colText = new PIXI.Text('col '+block.columnIdx, {fill: '#ffffff'});
+		this.debugId.addChild(colText);
+		colText.y += 20;
+		var stackText = new PIXI.Text('stk '+block.stackIdx, {fill: '#ffffff'});
+		this.debugId.addChild(stackText);
+		stackText.y += 40;
 	}
 	updateSpritePosition(y: number) {
 		this.sprite.y = y;

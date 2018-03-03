@@ -27,7 +27,8 @@
         "no-consecutive-blank-lines": [false],
         "no-string-literal": [false],
         "object-literal-shorthand": [false],
-        "one-variable-per-declaration": [false]
+        "one-variable-per-declaration": [false],
+        "no-angle-bracket-type-assertion": [false]
     },
     "rulesDirectory": []
 }

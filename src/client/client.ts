@@ -7,6 +7,7 @@ import { Planet } from '../game-core/Planet';
 var fps = 30;
 
 var game = new Round(fps);
+(<any>window).game = game;
 var board: Board;
 var facade: ClientFacade;
 
@@ -87,6 +88,7 @@ function beginRound() {
 			MINT: 10,
 		},
 	}));
+	// board.debugMaxBlocks = 100;
 	facade = new ClientFacade(board, app);
 	board.setFacade(facade);
 	lastTime = timestamp();

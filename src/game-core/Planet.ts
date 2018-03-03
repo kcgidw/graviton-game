@@ -34,18 +34,4 @@ export class Planet {
 			this.distribSum += this.inputDistrib[colorStr];
 		});
 	}
-
-	getRandomColor(): BlockColor {
-		let rng = rand(0,this.distribSum);
-		let colorIdx = 0;
-		// console.log('rng ' + rng);
-		for(; colorIdx < this.distribArr.length; colorIdx++) {
-			rng -= this.distribArr[colorIdx].weight;
-			if(rng < 0) {
-				break;
-			}
-		}
-		// console.log('   ' + this.distribArr[colorIdx].colorStr);
-		return this.distribArr[colorIdx].color;
-	}
 }
