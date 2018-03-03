@@ -1,6 +1,6 @@
 import {Board} from '../game-core/Board';
 import {Block} from '../game-core/Block';
-import {Box2d} from '../game-core/Box2d';
+import {Rectangle} from '../game-core/Rectangle';
 import {BlockColor, colorToFilename} from '../game-core/BlockColor';
 
 const targetBoardWidthRatio = 0.95;		// ratio of board width to canvas width

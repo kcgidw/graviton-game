@@ -1,4 +1,4 @@
-export class Box2d {
+export class Rectangle {
 	top: number;
 	left: number;
 	height: number;

@@ -422,7 +422,7 @@ exports.Round = Round;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const Block_1 = __webpack_require__(7);
-const Box2d_1 = __webpack_require__(8);
+const Rectangle_1 = __webpack_require__(8);
 const YHitbox_1 = __webpack_require__(1);
 const util_1 = __webpack_require__(2);
 /* TODO
@@ -441,7 +441,7 @@ class Board {
         this.engine = engine;
         this.planet = planet;
         this.numColumns = this.planet.numColumns;
-        this.dimensions = new Box2d_1.Box2d(0, 0, this.numRows * blockHeight, this.numColumns * blockHeight);
+        this.dimensions = new Rectangle_1.Rectangle(0, 0, this.numRows * blockHeight, this.numColumns * blockHeight);
         for (let i = 0; i < this.numColumns; i++) {
             this.blocks.push([]);
         }
@@ -609,7 +609,7 @@ exports.Block = Block;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-class Box2d {
+class Rectangle {
     constructor(top, left, height, width) {
         this.top = top;
         this.left = left;
@@ -623,7 +623,7 @@ class Box2d {
         return this.left + this.width;
     }
 }
-exports.Box2d = Box2d;
+exports.Rectangle = Rectangle;
 
 
 /***/ }),

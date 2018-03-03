@@ -1,7 +1,7 @@
 import {Block} from './Block';
 import {BlockColor, COLORS} from './BlockColor';
 import {ClientFacade} from '../client/ClientFacade';
-import {Box2d} from './Box2d';
+import {Rectangle} from './Rectangle';
 import { YHitbox } from './YHitbox';
 import { Round } from './Round';
 import { Planet } from './Planet';
@@ -17,7 +17,7 @@ export class Board {
 	engine: Round;
 
 	planet: Planet;
-	dimensions: Box2d;
+	dimensions: Rectangle;
 	numRows: number = 12;
 	numColumns: number;
 	colors: BlockColor[] = [];
@@ -40,7 +40,7 @@ export class Board {
 		this.engine = engine;
 		this.planet = planet;
 		this.numColumns = this.planet.numColumns;
-		this.dimensions = new Box2d(0, 0, this.numRows * blockHeight, this.numColumns * blockHeight);
+		this.dimensions = new Rectangle(0, 0, this.numRows * blockHeight, this.numColumns * blockHeight);
 
 		for(let i=0; i<this.numColumns; i++) {
 			this.blocks.push([]);
