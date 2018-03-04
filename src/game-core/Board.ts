@@ -115,16 +115,21 @@ export class Board {
 	columnIsFull(colIdx: number): boolean {
 		return this.blocks[colIdx].length >= this.numRows;
 	}
-	getNonFullColumnIdx(): number {
-		var colIdx: number;
-		var tried: any = {};
-		do {
-			colIdx = this.getRandomColumnIdx();
-			tried[colIdx] = 1;
-			if(Object.keys(tried).length === this.numColumns) {
-				return undefined;
+	getNonFullColumnsIdxs(): number[] {
+		var res: number[] = [];
+		for(let i=0; i<this.numColumns; i++) {
+			if(this.columnIsFull(i) === false) {
+				res.push(i);
 			}
-		} while (this.columnIsFull(colIdx));
+		}
+		return res;
+	}
+	getRandomNonFullColumnIdx(): number {
+		var openColumns: number[] = this.getNonFullColumnsIdxs();
+		if(openColumns.length === 0) {
+			return undefined;
+		}
+		var colIdx = openColumns[randInt(0, openColumns.length)];
 		return colIdx;
 	}
 	spawnBlock(colIdx: number, color: BlockColor): Block {
@@ -135,7 +140,7 @@ export class Board {
 		return block;
 	}
 	spawnBlockRandom(): Block {
-		var colIdx: number = this.getNonFullColumnIdx();
+		var colIdx: number = this.getRandomNonFullColumnIdx();
 		if(colIdx === undefined) {
 			return undefined;
 		}
