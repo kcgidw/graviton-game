@@ -6,6 +6,7 @@ import { YHitbox } from './YHitbox';
 import { Round } from './Round';
 import { Planet } from './Planet';
 import { rand, randInt } from '../util';
+import { Timer } from './Timer';
 
 /* TODO
 - Load a cache of block objects?
@@ -19,12 +20,11 @@ export class Board {
 	numRows: number = 12;
 	numColumns: number;
 	colors: BlockColor[] = [];
-	physics: IPlanetPhysics;
 
 	ground: YHitbox;
 	blocks: Block[][] = [];
 
-	spawnInterval: number = 0.1 * 1000;
+	spawnInterval: number = 0.05 * 1000;
 	spawner: Timer;
 
 	facade: ClientFacade;
@@ -94,7 +94,7 @@ export class Board {
 		} else {
 			this.spawner.step();
 		}
-		
+
 		this.tick++;
 	}
 
@@ -209,72 +209,4 @@ export class Board {
 		this.facade = facade;
 		return this.facade;
 	}
-}
-
-enum TimerState {STOP, START, PAUSE}
-class Timer {
-	state: TimerState = TimerState.STOP;
-	time: number = 0;
-	alarm: number;
-	board: Board;
-	action: ()=>any;
-	repeats: boolean = false;
-
-	constructor(board: Board, action: ()=>any, alarm: number, repeats?: boolean) {
-		this.board=  board;
-		this.action = action;
-		this.alarm = alarm;
-		this.repeats = repeats;
-	}
-
-	stop() {
-		this.state = TimerState.STOP;
-		this.time = 0;
-		return this;
-	}
-	start() {
-		this.state = TimerState.START;
-		return this;
-	}
-	pause() {
-		this.state = TimerState.PAUSE;
-		return this;
-	}
-
-	step() {
-		if(this.state === TimerState.START) {
-			this.time += this.board.engine.stepInterval;
-
-			if(this.repeats === true) {
-				let numTriggers = 0;
-				while(this.time > this.alarm) {
-					this.alert();
-					this.time -= this.alarm;
-					numTriggers++;
-				}
-			} else {
-				if(this.time > this.alarm) {
-					this.alert();
-					this.stop();
-				}
-			}
-		}
-	}
-
-	alert() {
-		this.action();
-	}
-}
-
-interface IPlanetPhysics {
-	fallIV: number;
-	fallROC: number;
-
-	launchIV: number;		// initial velocity (rising)
-	launchROC1: number;		// launch acceleration
-	launchROC1Dur: number;	// duration of launchROC1
-	launchROC2: number;		// deceleration after ROC1
-	launchFinal: number;		// final velocity (falling)
-
-	descentV: number;		// rocket descent velocity. no ROC
 }

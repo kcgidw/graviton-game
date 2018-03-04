@@ -2,8 +2,11 @@ import {Board} from '../game-core/Board';
 import {Block} from '../game-core/Block';
 import {Rectangle} from '../game-core/Rectangle';
 import {BlockColor, colorToFilename} from '../game-core/BlockColor';
+import { BlockSprite } from './BlockSprite';
 
 const targetBoardWidthRatio = 0.95;		// ratio of board width to canvas width
+
+export enum PointerState { DOWN, UP }
 
 export class ClientFacade {
 	board: Board;
@@ -13,6 +16,10 @@ export class ClientFacade {
 	backdropContainer: PIXI.Container;
 
 	blockSprites: BlockSpriteRegistry;
+
+	pointerState: PointerState;
+
+	selectedBlock: BlockSprite;
 
 	constructor(board: Board, app: PIXI.Application) {
 		this.board = board;
@@ -34,6 +41,11 @@ export class ClientFacade {
 
 		this.resizeBoard();
 
+		this.app.stage.interactive = true;
+		this.app.stage.on('pointerup', () => {
+			this.selectBlock(undefined);
+		});
+
 		console.log(this.boardContainer);
 	}
 
@@ -52,6 +64,10 @@ export class ClientFacade {
 		var topMargin = (canvasH - this.boardContainer.height) / 2;
 		this.boardContainer.x = leftMargin;
 		this.boardContainer.y = topMargin;
+	}
+
+	step(): void {
+		this.draw();
 	}
 
 	draw(): void {
@@ -79,6 +95,11 @@ export class ClientFacade {
 		let bs: BlockSprite = this.blockSprites.deregister(block);
 		bs.destroy();      // TODO hide and reuse
 	}
+
+	selectBlock(bs: BlockSprite): void {
+		this.selectedBlock = bs;
+		console.log(this.selectedBlock);
+	}
 }
 
 class BlockSpriteRegistry {
@@ -102,37 +123,5 @@ class BlockSpriteRegistry {
 		let bs: BlockSprite = this.get(block);
 		delete this.map[block.id];
 		return bs;
-	}
-}
-
-class BlockSprite {
-	block: Block;
-	sprite: PIXI.Sprite;
-	board: Board;
-	debugId: PIXI.Text;
-
-	constructor(board: Board, block: Block, sprite: PIXI.Sprite) {
-		this.board = board;
-		this.block = block;
-		this.sprite = sprite;
-
-		this.sprite.x = this.block.columnIdx * this.sprite.width;
-		this.sprite.interactive = true;
-
-		// debug text
-		this.debugId = new PIXI.Text(block.id + '', {fill: '#ffffff'});
-		var colText = new PIXI.Text('col '+block.columnIdx, {fill: '#ffffff'});
-		this.debugId.addChild(colText);
-		colText.y += 20;
-		var stackText = new PIXI.Text('stk '+block.stackIdx, {fill: '#ffffff'});
-		this.debugId.addChild(stackText);
-		stackText.y += 40;
-	}
-	updateSpritePosition(y: number) {
-		this.sprite.y = y;
-		this.sprite.addChild(this.debugId);
-	}
-	destroy() {
-		this.sprite.destroy();
 	}
 }
