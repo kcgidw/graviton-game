@@ -3,6 +3,7 @@ import {Block} from '../game-core/Block';
 import {Rectangle} from '../game-core/Rectangle';
 import {BlockColor, colorToFilename} from '../game-core/BlockColor';
 import { BlockSprite } from './BlockSprite';
+import { interaction } from 'pixi.js';
 
 const targetBoardWidthRatio = 0.95;		// ratio of board width to canvas width
 
@@ -41,12 +42,27 @@ export class ClientFacade {
 
 		this.resizeBoard();
 
+		/* Initialize pointer events */
+
 		this.app.stage.interactive = true;
 		this.app.stage.on('pointerup', () => {
 			this.selectBlock(undefined);
 		});
-
-		console.log(this.boardContainer);
+		this.app.stage.on('pointerout', () => {
+			this.selectBlock(undefined);
+		});
+		this.app.stage.on('pointermove', (eventData) => {
+			if(this.selectedBlock) {
+				var pointerCoordinates: PIXI.Point = eventData.data.getLocalPosition(this.boardContainer);
+				var pointerY: number = pointerCoordinates.y;
+				if(pointerY < this.selectedBlock.block.hitbox.top) {
+					this.board.swapUp(this.selectedBlock.block);
+				} else if(pointerY > this.selectedBlock.block.hitbox.getBottom()) {
+					this.board.swapDown(this.selectedBlock.block);
+				}
+				// console.log(pointerY);
+			}
+		});
 	}
 
 	resizeBoard(): void {
@@ -98,7 +114,7 @@ export class ClientFacade {
 
 	selectBlock(bs: BlockSprite): void {
 		this.selectedBlock = bs;
-		console.log(this.selectedBlock);
+		console.log('selected ' + this.selectedBlock);
 	}
 }
 

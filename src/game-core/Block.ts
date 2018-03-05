@@ -14,7 +14,7 @@ export class Block {
 
 	color: BlockColor;
 
-	matchable: boolean = false;	// can block be matched with other blocks
+	selectable: boolean = false;	// can block be matched with other blocks
 
 	constructor(columnIdx: number, stackIdx: number, color: BlockColor, id: number) {
 		this.columnIdx = columnIdx;
@@ -40,6 +40,10 @@ export class Block {
 	}
 	isStationary(): boolean {
 		return this.curVelocity === 0;
+	}
+
+	activateSelectable(): void {
+		this.selectable = true;
 	}
 
 	// getSittingOn(): Block {}

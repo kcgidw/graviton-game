@@ -23,6 +23,7 @@ export class Board {
 
 	ground: YHitbox;
 	blocks: Block[][] = [];
+	blocksMap: any = {};		// maps id to block
 
 	spawnInterval: number = 0.05 * 1000;
 	spawner: Timer;
@@ -63,10 +64,25 @@ export class Board {
 
 	forEachBlock(fn: (block: Block, idx: number)=>any) {
 		this.blocks.forEach((col) => {
-			col.forEach((block, idx) => {
+			col.forEach((block, idx) => {	// forEach iterates in asc order
 				fn(block, idx);
 			});
 		});
+	}
+	getBlock(blockId: number): Block {
+		return this.blocksMap[blockId];
+	}
+	getBlockAbove(block: Block): Block {
+		if(typeof block === 'number') {block = this.getBlock(block);}
+		let colIdx = block.columnIdx;
+		let stackIdx = block.stackIdx;
+		return this.blocks[colIdx][stackIdx + 1];
+	}
+	getBlockBelow(block: Block): Block {
+		if(typeof block === 'number') {block = this.getBlock(block);}
+		let colIdx = block.columnIdx;
+		let stackIdx = block.stackIdx;
+		return this.blocks[colIdx][stackIdx - 1];
 	}
 
 	step() {
@@ -78,15 +94,13 @@ export class Board {
 
 			block.hitbox.top = block.hitbox.top + (block.curVelocity * this.engine.BASE_LOGICAL_FPS / this.engine.stepInterval);
 
-			if(idx === 0 && block.hitbox.collidesBelow(this.ground)) {
-				block.hitbox.moveToContact(this.ground);
-			} else {
-				let nextBlock: Block = this.blocks[block.columnIdx][idx - 1];
-				if(nextBlock && block.hitbox.collidesBelow(nextBlock.hitbox)) {
-					block.hitbox.moveToContact(nextBlock.hitbox);
+			var hitboxBelow: YHitbox = idx === 0 ? this.ground : this.blocks[block.columnIdx][idx - 1].hitbox;
+			if(block.hitbox.collidesBelow(hitboxBelow)) {
+				block.hitbox.moveToContact(hitboxBelow);
+				if(block.selectable === false) {
+					block.activateSelectable();
 				}
 			}
-
 		});
 
 		if(this.debugMaxBlocks && this.blockId > this.debugMaxBlocks) {
@@ -96,16 +110,6 @@ export class Board {
 		}
 
 		this.tick++;
-	}
-
-	// Returns the next block under this one, even if they aren't in contact
-	getNextBlockBelow(block: Block): Block {
-		let colIdx = block.columnIdx;
-		let stackIdx = block.stackIdx;
-		if(stackIdx === 0) {
-			return null;
-		}
-		return this.blocks[colIdx][stackIdx - 1];
 	}
 
 	getRandomColumnIdx(): number {
@@ -137,6 +141,7 @@ export class Board {
 		var stackIdx = col.length;
 		var block: Block = new Block(colIdx, stackIdx, color, this.blockId++);
 		col.push(block);
+		this.blocksMap[block.id] = block;
 		return block;
 	}
 	spawnBlockRandom(): Block {
@@ -208,6 +213,44 @@ export class Board {
 		}
 
 		return true;		// no potential matches found
+	}
+
+	swapBlocks(a: Block, b: Block): void {
+		if(!a.selectable || !b.selectable) {
+			return;
+		}
+		if(a.columnIdx !== b.columnIdx) {
+			return;
+		}
+		if(Math.abs(a.stackIdx - b.stackIdx) !== 1) {
+			return;
+		}
+
+		var col = a.columnIdx;
+		var tmpA: Block = a;
+		var tmpAStackIdx: number = a.stackIdx;
+		var tmpAHitboxTop: number = a.hitbox.top;
+
+		this.blocks[col][a.stackIdx] = b;
+		this.blocks[col][b.stackIdx] = tmpA;
+
+		a.stackIdx = b.stackIdx;
+		b.stackIdx = tmpAStackIdx;
+
+		a.hitbox.top = b.hitbox.top;
+		b.hitbox.top = tmpAHitboxTop;
+	}
+	swapUp(block: Block): void {
+		var other: Block =  this.getBlockAbove(block);
+		if(other) {
+			this.swapBlocks(block,other);
+		}
+	}
+	swapDown(block: Block): void {
+		var other: Block =  this.getBlockBelow(block);
+		if(other) {
+			this.swapBlocks(block,other);
+		}
 	}
 
 	setFacade(facade: ClientFacade): ClientFacade {
