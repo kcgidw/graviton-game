@@ -5,7 +5,6 @@ import { BlockColor } from '../game-core/BlockColor';
 import { Planet } from '../game-core/Planet';
 
 var fps = 30;
-
 var game = new Round(fps);
 (<any>window).game = game;
 var board: Board;
@@ -13,25 +12,22 @@ var facade: ClientFacade;
 
 const canvasW = 720;
 const canvasH = 1280;
-
-let app = new PIXI.Application({ width: canvasW, height: canvasH });
+const gameAspectRatio = canvasW / canvasH;
+var app = new PIXI.Application({ width: canvasW, height: canvasH });
 // app.renderer.autoResize = true;
 // scale the pixi app and its stage
-const gameScreenRatio = canvasW / canvasH;
-// let scale = 0.6;
-// app.stage.scale = new PIXI.Point(scale, scale);
 function resizeRenderer() {
 	// TODO reimplement: https://webglfundamentals.org/webgl/lessons/webgl-anti-patterns.html
 	let winW = window.innerWidth;
 	let winH = window.innerHeight;
 	let newW, newH;
 
-	if (winW / winH >= gameScreenRatio) {
-		newW = winH * gameScreenRatio;
+	if (winW / winH >= gameAspectRatio) {
+		newW = winH * gameAspectRatio;
 		newH = winH;
 	} else {
 		newW = winW;
-		newH = winW / gameScreenRatio;
+		newH = winW / gameAspectRatio;
 	}
 	// canvas resize
 		// app.renderer.view.width = window.innerWidth;
@@ -46,7 +42,7 @@ function resizeRenderer() {
 resizeRenderer();
 window.onresize = resizeRenderer;
 
-let container = document.getElementById('game-wrapper');
+var container = document.getElementById('game-wrapper');
 container.appendChild(app.view)
 	.setAttribute('id', 'game-app');
 
