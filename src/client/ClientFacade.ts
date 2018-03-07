@@ -45,12 +45,13 @@ export class ClientFacade {
 		/* Initialize pointer events */
 
 		this.app.stage.interactive = true;
-		this.app.stage.on('pointerup', () => {
+		this.app.stage.on('pointerup', (eventData) => {
 			this.selectBlock(undefined);
 		});
-		this.app.stage.on('pointerout', () => {
+		this.app.stage.on('pointerout', (eventData) => {
 			this.selectBlock(undefined);
 		});
+		this.app.stage.on('pointerdown', (eventData) => {});
 		this.app.stage.on('pointermove', (eventData) => {
 			if(this.selectedBlock) {
 				var pointerCoordinates: PIXI.Point = eventData.data.getLocalPosition(this.boardContainer);
@@ -60,7 +61,6 @@ export class ClientFacade {
 				} else if(pointerY > this.selectedBlock.block.hitbox.getBottom()) {
 					this.board.swapDown(this.selectedBlock.block);
 				}
-				// console.log(pointerY);
 			}
 		});
 	}
@@ -114,7 +114,7 @@ export class ClientFacade {
 
 	selectBlock(bs: BlockSprite): void {
 		this.selectedBlock = bs;
-		console.log('selected ' + this.selectedBlock);
+		console.log(bs ? 'selected ' + this.selectedBlock.block.id : ' deselect');
 	}
 }
 

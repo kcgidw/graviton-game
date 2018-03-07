@@ -100,6 +100,7 @@ PIXI.loader
 	.add('purple', 'assets/images/purple.png')
 	.add('brown', 'assets/images/brown.png')
 	.add('pink', 'assets/images/pink.png')
+	.add('burnt', 'assets/images/burnt.png')
 	.add('cursor', 'assets/images/highlight.png')
 	.load(beginRound);
 

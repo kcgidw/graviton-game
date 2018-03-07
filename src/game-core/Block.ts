@@ -6,7 +6,7 @@ export class Block {
 	static SPAWN_POSITION: number = -100;
 
 	columnIdx: number;
-	stackIdx: number;
+	slotIdx: number;
 	id: number;
 
 	hitbox: YHitbox;
@@ -16,9 +16,12 @@ export class Block {
 
 	selectable: boolean = false;	// can block be matched with other blocks
 
-	constructor(columnIdx: number, stackIdx: number, color: BlockColor, id: number) {
+	contactBelow: boolean = false;
+	contactBelowPrev: boolean = false;
+
+	constructor(columnIdx: number, slotIdx: number, color: BlockColor, id: number) {
 		this.columnIdx = columnIdx;
-		this.stackIdx = stackIdx;
+		this.slotIdx = slotIdx;
 		this.hitbox = new YHitbox(Block.SPAWN_POSITION, Block.HEIGHT);
 		this.color = color;
 		this.id = id;

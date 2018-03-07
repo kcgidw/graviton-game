@@ -24,9 +24,11 @@ export class BlockSprite {
 		var colText = new PIXI.Text('col '+block.columnIdx, {fill: '#ffffff'});
 		this.debugId.addChild(colText);
 		colText.y += 20;
-		var stackText = new PIXI.Text('stk '+block.stackIdx, {fill: '#ffffff'});
-		this.debugId.addChild(stackText);
-		stackText.y += 40;
+		var slotText = new PIXI.Text('stk '+block.slotIdx, {fill: '#ffffff'});
+		this.debugId.addChild(slotText);
+		slotText.y += 40;
+
+		// (<any>this.sprite).__BLOCK = block;
 	}
 	updateSpritePosition(y: number) {
 		this.sprite.y = y;

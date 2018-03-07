@@ -39,6 +39,8 @@ export class Board {
 
 	debugMaxBlocks: number;
 
+	isDirtyForMatches: boolean = false;
+
 	constructor(engine: Round, planet: Planet, facade?: ClientFacade) {
 		this.engine = engine;
 		this.planet = planet;
@@ -75,20 +77,28 @@ export class Board {
 	getBlockAbove(block: Block): Block {
 		if(typeof block === 'number') {block = this.getBlock(block);}
 		let colIdx = block.columnIdx;
-		let stackIdx = block.stackIdx;
-		return this.blocks[colIdx][stackIdx + 1];
+		let slotIdx = block.slotIdx;
+		return this.blocks[colIdx][slotIdx + 1];
 	}
 	getBlockBelow(block: Block): Block {
 		if(typeof block === 'number') {block = this.getBlock(block);}
 		let colIdx = block.columnIdx;
-		let stackIdx = block.stackIdx;
-		return this.blocks[colIdx][stackIdx - 1];
+		let slotIdx = block.slotIdx;
+		return this.blocks[colIdx][slotIdx - 1];
+	}
+	getBlockDirectBelow(block: Block): Block {
+		var res = this.getBlockBelow(block);
+		if(res && res.hitbox.top === block.hitbox.getBottom() + 1) {
+			return res;
+		}
+		return undefined;
 	}
 
 	step() {
 		this.time += this.engine.stepInterval;
 
 		this.forEachBlock((block, idx) => {
+			block.contactBelowPrev = block.contactBelow;
 
 			// block physics
 
@@ -97,11 +107,22 @@ export class Board {
 			var hitboxBelow: YHitbox = idx === 0 ? this.ground : this.blocks[block.columnIdx][idx - 1].hitbox;
 			if(block.hitbox.collidesBelow(hitboxBelow)) {
 				block.hitbox.moveToContact(hitboxBelow);
+				block.contactBelow = true;
 				if(block.selectable === false) {
 					block.activateSelectable();
 				}
+				if(block.contactBelowPrev === false) {
+					this.isDirtyForMatches = true;
+				}
+			} else if (! this.getBlockDirectBelow(block)) {
+				block.contactBelow = false;
 			}
 		});
+
+		if(this.isDirtyForMatches) {
+			this.processMatches();
+			this.isDirtyForMatches = false;
+		}
 
 		if(this.debugMaxBlocks && this.blockId > this.debugMaxBlocks) {
 			this.spawner.stop();
@@ -138,8 +159,8 @@ export class Board {
 	}
 	spawnBlock(colIdx: number, color: BlockColor): Block {
 		var col: Block[] = this.blocks[colIdx];
-		var stackIdx = col.length;
-		var block: Block = new Block(colIdx, stackIdx, color, this.blockId++);
+		var slotIdx = col.length;
+		var block: Block = new Block(colIdx, slotIdx, color, this.blockId++);
 		col.push(block);
 		this.blocksMap[block.id] = block;
 		return block;
@@ -165,10 +186,10 @@ export class Board {
 		// console.log('   ' + this.distribArr[colorIdx].colorStr);
 		return this.planet.distribArr[colorIdx].color;
 	}
-	chooseColor(colIdx: number, stackIdx: number): BlockColor {
+	chooseColor(colIdx: number, slotIdx: number): BlockColor {
 		var color: BlockColor = this.getRandomColor();
 		var tried = {};
-		while(this.validateColor(colIdx, stackIdx, color) === false) {
+		while(this.validateColor(colIdx, slotIdx, color) === false) {
 			tried[color] = 0;
 			// get a new random color that hasn't been tried yet
 			while(tried[color] !== undefined) {
@@ -177,35 +198,35 @@ export class Board {
 		}
 		return color;
 	}
-	getColorAt(colIdx: number, stackIdx: number): BlockColor {
+	getColorAt(colIdx: number, slotIdx: number): BlockColor {
 		var col: Block[] = this.blocks[colIdx];
 		if(col === undefined) {
 			return undefined;
 		}
-		var blk: Block = col[stackIdx];
+		var blk: Block = col[slotIdx];
 		return blk ? blk.color : undefined;
 	}
 
-	// checks if placing a color at a certain columnXstack could create a natural match-3
-	validateColor(colIdx: number, stackIdx: number, color: BlockColor): boolean {
-		// check adjacent columns
-		var stackRange: Block[] = this.blocks.map((col) => (col[stackIdx]));
-		var neighbor0: BlockColor =this.getColorAt(colIdx-2, stackIdx);
-		var neighbor1: BlockColor =this.getColorAt(colIdx-1, stackIdx);
-		var neighbor2: BlockColor =this.getColorAt(colIdx+1, stackIdx);
-		var neighbor3: BlockColor =this.getColorAt(colIdx+2, stackIdx);
+	// checks if placing a color at a certain columnXslot could create a natural match-3
+	validateColor(colIdx: number, slotIdx: number, color: BlockColor): boolean {
+		// check horiz
+		var slotRange: Block[] = this.blocks.map((col) => (col[slotIdx]));
+		var neighbor0: BlockColor =this.getColorAt(colIdx-2, slotIdx);
+		var neighbor1: BlockColor =this.getColorAt(colIdx-1, slotIdx);
+		var neighbor2: BlockColor =this.getColorAt(colIdx+1, slotIdx);
+		var neighbor3: BlockColor =this.getColorAt(colIdx+2, slotIdx);
 		if((neighbor0 === color && neighbor1 === color)
 			|| (neighbor1 === color && neighbor2 === color)
 			|| (neighbor2 === color && neighbor3 === color)) {
 			return false;
 		}
 
-		// check adjacent blocks in the same column
+		// check vert
 		var colRange: Block[] = this.blocks[colIdx];
-		neighbor0 =this.getColorAt(colIdx, stackIdx-2);
-		neighbor1 =this.getColorAt(colIdx, stackIdx-1);
-		neighbor2 =this.getColorAt(colIdx, stackIdx+1);
-		neighbor3 =this.getColorAt(colIdx, stackIdx+2);
+		neighbor0 =this.getColorAt(colIdx, slotIdx-2);
+		neighbor1 =this.getColorAt(colIdx, slotIdx-1);
+		neighbor2 =this.getColorAt(colIdx, slotIdx+1);
+		neighbor3 =this.getColorAt(colIdx, slotIdx+2);
 		if((neighbor0 === color && neighbor1 === color)
 			|| (neighbor1 === color && neighbor2 === color)
 			|| (neighbor2 === color && neighbor3 === color)) {
@@ -215,6 +236,41 @@ export class Board {
 		return true;		// no potential matches found
 	}
 
+	processMatches(): void {
+		var matchings: number[][] = [];
+		var matchId: number = 0;
+		for(let i=0; i<this.numColumns; i++) {
+			matchings.push(new Array(this.numRows).fill(undefined, 0, this.numRows));
+		}
+		for(let curCol=0; curCol<this.numColumns; curCol++) {
+			for(let curSlot=0; curSlot<this.numRows; curSlot++) {
+				if(matchings[curCol][curSlot] === undefined) {
+					let referenceBlk: Block = this.blocks[curCol][curSlot];
+					if(referenceBlk !== undefined) {
+						let matchesToRight: Block[] = [referenceBlk];
+						for(let i=curCol + 1; i<this.numColumns; i++) {
+							let compareBlk: Block = this.blocks[i][curSlot];
+							if(compareBlk !== undefined && referenceBlk.color === compareBlk.color) {
+								matchesToRight.push(compareBlk);
+							} else {
+								break;
+							}
+						}
+						if(matchesToRight.length >= 3) {
+							matchesToRight.forEach((blk) => {
+								matchings[blk.columnIdx][blk.slotIdx] = matchId;
+							});
+							matchId++;
+						}
+					}
+				}
+			}
+		}
+		if(matchId > 0) {
+			console.log(matchings);
+		}
+	}
+
 	swapBlocks(a: Block, b: Block): void {
 		if(!a.selectable || !b.selectable) {
 			return;
@@ -222,23 +278,25 @@ export class Board {
 		if(a.columnIdx !== b.columnIdx) {
 			return;
 		}
-		if(Math.abs(a.stackIdx - b.stackIdx) !== 1) {
+		if(Math.abs(a.slotIdx - b.slotIdx) !== 1) {
 			return;
 		}
 
 		var col = a.columnIdx;
 		var tmpA: Block = a;
-		var tmpAStackIdx: number = a.stackIdx;
+		var tmpAStackIdx: number = a.slotIdx;
 		var tmpAHitboxTop: number = a.hitbox.top;
 
-		this.blocks[col][a.stackIdx] = b;
-		this.blocks[col][b.stackIdx] = tmpA;
+		this.blocks[col][a.slotIdx] = b;
+		this.blocks[col][b.slotIdx] = tmpA;
 
-		a.stackIdx = b.stackIdx;
-		b.stackIdx = tmpAStackIdx;
+		a.slotIdx = b.slotIdx;
+		b.slotIdx = tmpAStackIdx;
 
 		a.hitbox.top = b.hitbox.top;
 		b.hitbox.top = tmpAHitboxTop;
+
+		this.isDirtyForMatches = true;
 	}
 	swapUp(block: Block): void {
 		var other: Block =  this.getBlockAbove(block);
