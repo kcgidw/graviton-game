@@ -21,14 +21,14 @@
         "indent": [true, "tabs"],
         "ter-indent": [true, "tab"],
         "whitespace": [true, "check-preblock"],
-        "no-trailing-whitespace": { "severity": "warn" },
+        "no-trailing-whitespace": [false],
         "object-literal-sort-keys": [false],
         "only-arrow-functions": [false],
         "no-consecutive-blank-lines": [false],
         "no-string-literal": [false],
         "object-literal-shorthand": [false],
         "one-variable-per-declaration": [false],
-        "no-angle-bracket-type-assertion": [false]
+        "no-angle-bracket-type-assertion": [false],
     },
     "rulesDirectory": []
 }

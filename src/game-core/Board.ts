@@ -1,4 +1,4 @@
-import {Block} from './Block';
+import {Block, IMatchInfo} from './Block';
 import {BlockColor, COLORS} from './BlockColor';
 import {ClientFacade} from '../client/ClientFacade';
 import {Rectangle} from './Rectangle';
@@ -7,6 +7,7 @@ import { Round } from './Round';
 import { Planet } from './Planet';
 import { rand, randInt } from '../util';
 import { Timer } from './Timer';
+import { CompoundMatch, SimpleMatch } from './matches';
 
 /* TODO
 - Load a cache of block objects?
@@ -40,6 +41,7 @@ export class Board {
 	debugMaxBlocks: number;
 
 	isDirtyForMatches: boolean = false;
+	compoundMatches: CompoundMatch[] = [];
 
 	constructor(engine: Round, planet: Planet, facade?: ClientFacade) {
 		this.engine = engine;
@@ -120,7 +122,7 @@ export class Board {
 		});
 
 		if(this.isDirtyForMatches) {
-			this.processMatches();
+			this.compoundMatches = this.processMatches();
 			this.isDirtyForMatches = false;
 		}
 
@@ -236,42 +238,8 @@ export class Board {
 		return true;		// no potential matches found
 	}
 
-	processMatches(): void {
-		var matchings: number[][] = [];
-		var matchId: number = 0;
-		for(let i=0; i<this.numColumns; i++) {
-			matchings.push(new Array(this.numRows).fill(undefined, 0, this.numRows));
-		}
-		for(let curCol=0; curCol<this.numColumns; curCol++) {
-			for(let curSlot=0; curSlot<this.numRows; curSlot++) {
-				if(matchings[curCol][curSlot] === undefined) {
-					let referenceBlk: Block = this.blocks[curCol][curSlot];
-					if(referenceBlk !== undefined) {
-						let matchesToRight: Block[] = [referenceBlk];
-						for(let i=curCol + 1; i<this.numColumns; i++) {
-							let compareBlk: Block = this.blocks[i][curSlot];
-							if(compareBlk !== undefined && referenceBlk.color === compareBlk.color) {
-								matchesToRight.push(compareBlk);
-							} else {
-								break;
-							}
-						}
-						if(matchesToRight.length >= 3) {
-							matchesToRight.forEach((blk) => {
-								matchings[blk.columnIdx][blk.slotIdx] = matchId;
-							});
-							matchId++;
-						}
-					}
-				}
-			}
-		}
-		if(matchId > 0) {
-			console.log(matchings);
-		}
-	}
-
 	swapBlocks(a: Block, b: Block): void {
+		// TODO run within the step logic, not outside it
 		if(!a.selectable || !b.selectable) {
 			return;
 		}
@@ -314,5 +282,107 @@ export class Board {
 	setFacade(facade: ClientFacade): ClientFacade {
 		this.facade = facade;
 		return this.facade;
+	}
+
+	processMatches(): CompoundMatch[] {
+		this.compoundMatches = [];
+
+		this.forEachBlock((blk) => {
+			blk.matchInfo = undefined;
+		});
+
+		var allMatchBlocks: Block[] = [];
+
+		/* Generate simple matches */
+		for(let colIdx=0; colIdx<this.numColumns; colIdx++) {
+			for(let slotIdx=0; slotIdx<this.blocks[colIdx].length; slotIdx++) {
+				let refBlk: Block = this.blocks[colIdx][slotIdx];
+				if(refBlk) {
+					refBlk.matchInfo = refBlk.matchInfo ? refBlk.matchInfo : {};
+					if(refBlk.matchInfo.hor === undefined) {
+						let match: SimpleMatch = new SimpleMatch([refBlk], true);
+						for(let i=colIdx + 1; i<this.numColumns; i++) {
+							let compareBlk: Block = this.blocks[i][slotIdx];
+							if(compareBlk !== undefined && refBlk.color === compareBlk.color) {
+								match.add(compareBlk);
+							} else {
+								break; // non-existent or non-match. No more matches can follow
+							}
+						}
+						// if is a valid simple match, then attach info to each of its blocks
+						if(match.blocks.length >= 3) {
+							match.blocks.forEach((blk) => {
+								blk.matchInfo = blk.matchInfo ? blk.matchInfo : {};
+								blk.matchInfo.hor = match;
+								if(allMatchBlocks.indexOf(blk) === -1) {
+									allMatchBlocks.push(blk);
+								}
+							});
+						}
+					}
+	
+					if(refBlk.matchInfo.ver === undefined) {
+						let match: SimpleMatch = new SimpleMatch([refBlk], false);
+						for(let i=slotIdx + 1; i<this.blocks[colIdx].length; i++) {
+							let compareBlk: Block = this.blocks[colIdx][i];
+							if(compareBlk !== undefined && refBlk.color === compareBlk.color) {
+								match.add(compareBlk);
+							} else {
+								break;
+							}
+						}
+						if(match.blocks.length >= 3) {
+							match.blocks.forEach((blk) => {
+								blk.matchInfo = blk.matchInfo ? blk.matchInfo : {};
+								blk.matchInfo.ver = match;
+								if(allMatchBlocks.indexOf(blk) === -1) {
+									allMatchBlocks.push(blk);
+								}
+							});
+						}
+					}
+				}
+			}
+		}
+
+		/*
+		Convert simple matches into compound matches.
+		If a simple match intersects with another simple match, attach the other into the compound.
+		If the other is also a part of a compound, merge the two compounds.
+		*/
+		allMatchBlocks.forEach((refBlk) => {
+			let refMatch: IMatchInfo = refBlk.matchInfo;
+
+			if(refMatch !== undefined) {	// then blk is part of at least 1 match
+				if(refMatch.compound === undefined) {
+					refMatch.compound = new CompoundMatch();
+				}
+				['hor','ver'].forEach((simp) => {
+					if(refMatch[simp] !== undefined) {
+						let simple = refMatch[simp];
+						refMatch.compound.attachSimpleMatch(simple);
+						simple.blocks.forEach((simpleMember) => {
+							let toAbsorb: CompoundMatch = simpleMember.matchInfo.compound;
+							if(toAbsorb !== undefined && toAbsorb !== refMatch.compound) {
+								refMatch.compound.absorbCompoundMatch(toAbsorb);
+							}
+							simpleMember.matchInfo.compound = refMatch.compound;
+						});
+					}
+				});
+			}
+		});
+
+		var compounds: CompoundMatch[] = [];
+		allMatchBlocks.forEach((blk)=>{
+			var comp = blk.matchInfo.compound;
+			if(compounds.indexOf(comp) === -1) {
+				compounds.push(comp);
+			}
+		});
+		if(compounds.length > 0) {
+			console.log(compounds);
+		}
+		return compounds;
 	}
 }

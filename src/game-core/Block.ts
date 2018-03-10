@@ -1,5 +1,6 @@
 import {YHitbox} from './YHitbox';
 import {BlockColor} from './BlockColor';
+import { SimpleMatch, CompoundMatch } from './matches';
 
 export class Block {
 	static HEIGHT: number = 100;
@@ -16,8 +17,10 @@ export class Block {
 
 	selectable: boolean = false;	// can block be matched with other blocks
 
-	contactBelow: boolean = false;
-	contactBelowPrev: boolean = false;
+	contactBelow: boolean = false;	// is touching a solid directly below
+	contactBelowPrev: boolean = false;	// contactBelow for previous frame
+
+	matchInfo: IMatchInfo;
 
 	constructor(columnIdx: number, slotIdx: number, color: BlockColor, id: number) {
 		this.columnIdx = columnIdx;
@@ -49,6 +52,15 @@ export class Block {
 		this.selectable = true;
 	}
 
+	setType(): void {
+		// clear matches
+	}
+
 	// getSittingOn(): Block {}
 	// getSittingAbove(): Block {}
+}
+export interface IMatchInfo {
+	hor?: SimpleMatch;
+	ver?: SimpleMatch;
+	compound?: CompoundMatch;
 }
