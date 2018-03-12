@@ -8,6 +8,7 @@ import { Planet } from './Planet';
 import { rand, randInt } from '../util';
 import { Timer } from './Timer';
 import { CompoundMatch, SimpleMatch } from './matches';
+import { BlockType } from './BlockType';
 
 /* TODO
 - Load a cache of block objects?
@@ -162,7 +163,8 @@ export class Board {
 	spawnBlock(colIdx: number, color: BlockColor): Block {
 		var col: Block[] = this.blocks[colIdx];
 		var slotIdx = col.length;
-		var block: Block = new Block(colIdx, slotIdx, color, this.blockId++);
+		var block: Block = new Block(colIdx, slotIdx, BlockType.NORMAL, this.blockId++)
+			.setColor(color);
 		col.push(block);
 		this.blocksMap[block.id] = block;
 		return block;

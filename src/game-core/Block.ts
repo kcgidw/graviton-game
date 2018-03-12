@@ -1,6 +1,7 @@
 import {YHitbox} from './YHitbox';
 import {BlockColor} from './BlockColor';
 import { SimpleMatch, CompoundMatch } from './matches';
+import { BlockType } from './BlockType';
 
 export class Block {
 	static HEIGHT: number = 100;
@@ -9,6 +10,8 @@ export class Block {
 	columnIdx: number;
 	slotIdx: number;
 	id: number;
+
+	type: BlockType;
 
 	hitbox: YHitbox;
 	curVelocity: number = 60;
@@ -22,20 +25,21 @@ export class Block {
 
 	matchInfo: IMatchInfo;
 
-	constructor(columnIdx: number, slotIdx: number, color: BlockColor, id: number) {
+	constructor(columnIdx: number, slotIdx: number, type: BlockType, id: number) {
 		this.columnIdx = columnIdx;
 		this.slotIdx = slotIdx;
 		this.hitbox = new YHitbox(Block.SPAWN_POSITION, Block.HEIGHT);
-		this.color = color;
 		this.id = id;
+		this.type = type;
 	}
 
 	// step(): void {
 	// 	this.hitbox.move(this.curVelocity);
 	// }
 
-	setColor(blockColor: BlockColor) {
+	setColor(blockColor: BlockColor): Block {
 		this.color = blockColor;
+		return this;
 	}
 
 	isRising(): boolean {
@@ -48,12 +52,23 @@ export class Block {
 		return this.curVelocity === 0;
 	}
 
-	activateSelectable(): void {
+	activateSelectable(): Block {
 		this.selectable = true;
+		return this;
 	}
 
-	setType(): void {
+	setType(type: BlockType): Block {
 		// clear matches
+		this.matchInfo = undefined;
+		switch(type) {
+			case BlockType.NORMAL:
+				break;
+			case BlockType.GARBAGE:
+			case BlockType.ROCKET:
+				this.color = undefined;
+				break;
+		}
+		return this;
 	}
 
 	// getSittingOn(): Block {}
