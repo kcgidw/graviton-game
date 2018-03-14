@@ -4,13 +4,14 @@ import {Planet} from './Planet';
 
 export class Round {
 	BASE_LOGICAL_FPS: number = 60;
-
-	stepInterval: number;		// in millisec. Accounts for 'BASE_LOGICAL_FPS'
+	fps: number;
+	stepInterval: number;		// in millisec
 
 	board: Board;
 
-	constructor(stepInterval: number) {
-		this.stepInterval = stepInterval;
+	constructor(fps: number) {
+		this.fps = fps;
+		this.stepInterval = 1000 / fps;
 	}
 
 	createBoard(planet: Planet): Board {

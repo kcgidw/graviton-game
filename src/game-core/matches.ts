@@ -35,11 +35,26 @@ export class CompoundMatch {
 			this.attachSimpleMatch(sm);
 		});
 	}
-	getBlocks(): Block[] {
-		var res: Block[] = [];
-		this.simpleMatches.forEach((simp) => {
-			res.concat(simp.blocks);
-		});
-		return res;
-	}
 }
+
+/*
+some match scenarios...
+F = blocks falling into place
+
+Faa
+Faa
+a
+
+aFa
+ a
+ a
+	
+aFF
+ aa
+ aa
+	
+aaF
+aaF
+  a
+
+*/

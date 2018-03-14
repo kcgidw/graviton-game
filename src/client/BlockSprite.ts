@@ -1,6 +1,8 @@
 import { Block } from "../game-core/Block";
 import { Board } from "../game-core/Board";
 import { PointerState } from "./ClientFacade";
+import { BlockType } from "../game-core/BlockType";
+import { BlockColorUtil } from "../game-core/BlockColor";
 
 export class BlockSprite {
 	block: Block;
@@ -33,6 +35,18 @@ export class BlockSprite {
 	updateSpritePosition(y: number) {
 		this.sprite.y = y;
 		this.sprite.addChild(this.debugId);
+	}
+	updateTexture() {
+		var type: BlockType = this.block.type;
+		switch(type) {
+			case BlockType.NORMAL:
+				this.sprite.texture = BlockColorUtil.colorToTexture(this.block.color);
+				break;
+			case BlockType.ROCKET:
+				break;
+			case BlockType.GARBAGE:
+				break;
+		}
 	}
 	destroy() {
 		this.sprite.destroy();

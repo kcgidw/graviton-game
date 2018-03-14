@@ -1,4 +1,4 @@
-import { BlockColor, strToColor } from "./BlockColor";
+import { BlockColor, BlockColorUtil } from "./BlockColor";
 import { randInt,rand } from "../util";
 import { Block } from "./Block";
 
@@ -36,9 +36,9 @@ export class Planet {
 
 		this.distribSum = 0;
 		Object.keys(this.inputDistrib).forEach((colorStr) => {
-			this.colors.push(strToColor(colorStr));
+			this.colors.push(BlockColorUtil.strToColor(colorStr));
 			this.distribArr.push({
-				color: strToColor(colorStr),
+				color: BlockColorUtil.strToColor(colorStr),
 				colorStr: colorStr,
 				weight: this.inputDistrib[colorStr],
 			});

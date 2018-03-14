@@ -80,22 +80,24 @@ var BlockColor;
     BlockColor[BlockColor["PURPLE"] = 5] = "PURPLE";
     BlockColor[BlockColor["PINK"] = 6] = "PINK";
     BlockColor[BlockColor["BROWN"] = 7] = "BROWN";
-})(BlockColor || (BlockColor = {}));
-exports.BlockColor = BlockColor;
-const COLORS = ['RED', 'YELLOW', 'MINT', 'FOREST', 'AQUA', 'PURPLE', 'PINK', 'BROWN'];
-exports.COLORS = COLORS;
-function colorToFilename(color) {
-    return COLORS[color].toLowerCase();
-}
-exports.colorToFilename = colorToFilename;
-function strToColor(str) {
-    var res = BlockColor[str];
-    if (res === undefined) {
-        throw new Error('strtocolor ' + str);
+})(BlockColor = exports.BlockColor || (exports.BlockColor = {}));
+exports.COLORS = ['RED', 'YELLOW', 'MINT', 'FOREST', 'AQUA', 'PURPLE', 'PINK', 'BROWN'];
+class BlockColorUtil {
+    static colorToFilename(color) {
+        return exports.COLORS[color].toLowerCase();
     }
-    return res;
+    static colorToTexture(color) {
+        return PIXI.loader.resources[this.colorToFilename(color)].texture;
+    }
+    static strToColor(str) {
+        var res = BlockColor[str];
+        if (res === undefined) {
+            throw new Error('strtocolor ' + str);
+        }
+        return res;
+    }
 }
-exports.strToColor = strToColor;
+exports.BlockColorUtil = BlockColorUtil;
 // const BlockColorMap = {
 // 	RED: 1,
 // 	YELLOW: 2,
@@ -118,6 +120,21 @@ exports.strToColor = strToColor;
 
 /***/ }),
 /* 1 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var BlockType;
+(function (BlockType) {
+    BlockType[BlockType["NORMAL"] = 0] = "NORMAL";
+    BlockType[BlockType["ROCKET"] = 1] = "ROCKET";
+    BlockType[BlockType["GARBAGE"] = 2] = "GARBAGE";
+})(BlockType = exports.BlockType || (exports.BlockType = {}));
+
+
+/***/ }),
+/* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -163,28 +180,6 @@ exports.YHitbox = YHitbox;
 
 
 /***/ }),
-/* 2 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-function randInt(from, to, inclusive) {
-    var range = to - from;
-    var tmp = Math.floor(Math.random() * (range + (inclusive ? 1 : 0)));
-    return from + tmp;
-}
-exports.randInt = randInt;
-function rand(from, to) {
-    // to-exclusive
-    var range = to - from;
-    var tmp = Math.random() * range;
-    return from + tmp;
-}
-exports.rand = rand;
-
-
-/***/ }),
 /* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -192,32 +187,31 @@ exports.rand = rand;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const ClientFacade_1 = __webpack_require__(4);
-const Round_1 = __webpack_require__(5);
-const Planet_1 = __webpack_require__(9);
+const Round_1 = __webpack_require__(6);
+const Planet_1 = __webpack_require__(13);
 var fps = 30;
 var game = new Round_1.Round(fps);
+window.game = game;
 var board;
 var facade;
 const canvasW = 720;
 const canvasH = 1280;
-let app = new PIXI.Application({ width: canvasW, height: canvasH });
+const gameAspectRatio = canvasW / canvasH;
+var app = new PIXI.Application({ width: canvasW, height: canvasH });
 // app.renderer.autoResize = true;
 // scale the pixi app and its stage
-const gameScreenRatio = canvasW / canvasH;
-// let scale = 0.6;
-// app.stage.scale = new PIXI.Point(scale, scale);
 function resizeRenderer() {
     // TODO reimplement: https://webglfundamentals.org/webgl/lessons/webgl-anti-patterns.html
     let winW = window.innerWidth;
     let winH = window.innerHeight;
     let newW, newH;
-    if (winW / winH >= gameScreenRatio) {
-        newW = winH * gameScreenRatio;
+    if (winW / winH >= gameAspectRatio) {
+        newW = winH * gameAspectRatio;
         newH = winH;
     }
     else {
         newW = winW;
-        newH = winW / gameScreenRatio;
+        newH = winW / gameAspectRatio;
     }
     // canvas resize
     // app.renderer.view.width = window.innerWidth;
@@ -231,7 +225,7 @@ function resizeRenderer() {
 }
 resizeRenderer();
 window.onresize = resizeRenderer;
-let container = document.getElementById('game-wrapper');
+var container = document.getElementById('game-wrapper');
 container.appendChild(app.view)
     .setAttribute('id', 'game-app');
 var now;
@@ -253,7 +247,7 @@ function mainStep() {
     }
     requestAnimationFrame(mainStep);
     lastTime = now;
-    facade.draw();
+    facade.step();
 }
 function beginRound() {
     board = game.createBoard(new Planet_1.Planet({
@@ -267,6 +261,7 @@ function beginRound() {
             MINT: 10,
         },
     }));
+    // board.debugMaxBlocks = 100;
     facade = new ClientFacade_1.ClientFacade(board, app);
     board.setFacade(facade);
     lastTime = timestamp();
@@ -281,6 +276,8 @@ PIXI.loader
     .add('purple', 'assets/images/purple.png')
     .add('brown', 'assets/images/brown.png')
     .add('pink', 'assets/images/pink.png')
+    .add('burnt', 'assets/images/burnt.png')
+    .add('cursor', 'assets/images/highlight.png')
     .load(beginRound);
 function timestamp() {
     return window.performance && window.performance.now ? window.performance.now() : new Date().getTime();
@@ -295,7 +292,13 @@ function timestamp() {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const BlockColor_1 = __webpack_require__(0);
+const BlockSprite_1 = __webpack_require__(5);
 const targetBoardWidthRatio = 0.95; // ratio of board width to canvas width
+var PointerState;
+(function (PointerState) {
+    PointerState[PointerState["DOWN"] = 0] = "DOWN";
+    PointerState[PointerState["UP"] = 1] = "UP";
+})(PointerState = exports.PointerState || (exports.PointerState = {}));
 class ClientFacade {
     constructor(board, app) {
         this.board = board;
@@ -312,7 +315,27 @@ class ClientFacade {
         // this.blocksContainer.x = xMargin;
         // this.blocksContainer.y = yMargin;
         this.resizeBoard();
-        console.log(this.boardContainer);
+        /* Initialize pointer events */
+        this.app.stage.interactive = true;
+        this.app.stage.on('pointerup', (eventData) => {
+            this.selectBlock(undefined);
+        });
+        this.app.stage.on('pointerout', (eventData) => {
+            this.selectBlock(undefined);
+        });
+        this.app.stage.on('pointerdown', (eventData) => { });
+        this.app.stage.on('pointermove', (eventData) => {
+            if (this.selectedBlock) {
+                var pointerCoordinates = eventData.data.getLocalPosition(this.boardContainer);
+                var pointerY = pointerCoordinates.y;
+                if (pointerY < this.selectedBlock.block.hitbox.top) {
+                    this.board.swapUp(this.selectedBlock.block);
+                }
+                else if (pointerY > this.selectedBlock.block.hitbox.getBottom()) {
+                    this.board.swapDown(this.selectedBlock.block);
+                }
+            }
+        });
     }
     resizeBoard() {
         var canvasW = this.app.renderer.view.width;
@@ -329,6 +352,9 @@ class ClientFacade {
         this.boardContainer.x = leftMargin;
         this.boardContainer.y = topMargin;
     }
+    step() {
+        this.draw();
+    }
     draw() {
         this.board.blocks.forEach((column) => {
             column.forEach((block) => {
@@ -343,7 +369,7 @@ class ClientFacade {
     addBlock(block) {
         // blocksprite's sprite width will start as 0 if texture is loaded on demand,
         // causing draw mistakes. Make sure your stuff is pre-loaded
-        let spr = new PIXI.Sprite(PIXI.loader.resources[BlockColor_1.colorToFilename(block.color)].texture);
+        let spr = new PIXI.Sprite(PIXI.loader.resources[BlockColor_1.BlockColorUtil.colorToFilename(block.color)].texture);
         // TODO preload texture http://www.html5gamedevs.com/topic/16019-preload-all-textures/
         this.blocksContainer.addChild(spr);
         let bs = this.blockSprites.register(block, spr);
@@ -352,6 +378,10 @@ class ClientFacade {
     removeBlock(block) {
         let bs = this.blockSprites.deregister(block);
         bs.destroy(); // TODO hide and reuse
+    }
+    selectBlock(bs) {
+        this.selectedBlock = bs;
+        console.log(bs ? 'selected ' + this.selectedBlock.block.id : ' deselect');
     }
 }
 exports.ClientFacade = ClientFacade;
@@ -364,7 +394,7 @@ class BlockSpriteRegistry {
         return this.map[block.id];
     }
     register(block, sprite) {
-        let bs = new BlockSprite(this.facade.board, block, sprite);
+        let bs = new BlockSprite_1.BlockSprite(this.facade.board, block, sprite);
         this.map[block.id] = bs;
         return bs;
     }
@@ -372,23 +402,6 @@ class BlockSpriteRegistry {
         let bs = this.get(block);
         delete this.map[block.id];
         return bs;
-    }
-}
-class BlockSprite {
-    constructor(board, block, sprite) {
-        this.board = board;
-        this.block = block;
-        this.sprite = sprite;
-        this.sprite.x = this.block.columnIdx * this.sprite.width;
-        this.sprite.interactive = true;
-        this.debugId = new PIXI.Text(block.id + ' ' + block.columnIdx, { fill: '#ffffff' });
-    }
-    updateSpritePosition(y) {
-        this.sprite.y = y;
-        this.sprite.addChild(this.debugId);
-    }
-    destroy() {
-        this.sprite.destroy();
     }
 }
 
@@ -400,7 +413,59 @@ class BlockSprite {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Board_1 = __webpack_require__(6);
+const BlockType_1 = __webpack_require__(1);
+const BlockColor_1 = __webpack_require__(0);
+class BlockSprite {
+    constructor(board, block, sprite) {
+        this.board = board;
+        this.block = block;
+        this.sprite = sprite;
+        this.sprite.x = this.block.columnIdx * this.sprite.width;
+        this.sprite.interactive = true;
+        this.sprite.on('pointerdown', () => {
+            this.board.facade.selectBlock(this);
+        });
+        // debug text
+        this.debugId = new PIXI.Text(block.id + '', { fill: '#ffffff' });
+        var colText = new PIXI.Text('col ' + block.columnIdx, { fill: '#ffffff' });
+        this.debugId.addChild(colText);
+        colText.y += 20;
+        var slotText = new PIXI.Text('stk ' + block.slotIdx, { fill: '#ffffff' });
+        this.debugId.addChild(slotText);
+        slotText.y += 40;
+        // (<any>this.sprite).__BLOCK = block;
+    }
+    updateSpritePosition(y) {
+        this.sprite.y = y;
+        this.sprite.addChild(this.debugId);
+    }
+    updateTexture() {
+        var type = this.block.type;
+        switch (type) {
+            case BlockType_1.BlockType.NORMAL:
+                this.sprite.texture = BlockColor_1.BlockColorUtil.colorToTexture(this.block.color);
+                break;
+            case BlockType_1.BlockType.ROCKET:
+                break;
+            case BlockType_1.BlockType.GARBAGE:
+                break;
+        }
+    }
+    destroy() {
+        this.sprite.destroy();
+    }
+}
+exports.BlockSprite = BlockSprite;
+
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const Board_1 = __webpack_require__(7);
 class Round {
     constructor(stepInterval) {
         this.BASE_LOGICAL_FPS = 60;
@@ -415,42 +480,49 @@ exports.Round = Round;
 
 
 /***/ }),
-/* 6 */
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Block_1 = __webpack_require__(7);
-const Rectangle_1 = __webpack_require__(8);
-const YHitbox_1 = __webpack_require__(1);
-const util_1 = __webpack_require__(2);
+const Block_1 = __webpack_require__(8);
+const Rectangle_1 = __webpack_require__(9);
+const YHitbox_1 = __webpack_require__(2);
+const util_1 = __webpack_require__(10);
+const Timer_1 = __webpack_require__(11);
+const matches_1 = __webpack_require__(12);
+const BlockType_1 = __webpack_require__(1);
 /* TODO
 - Load a cache of block objects?
 */
-const blockHeight = 100;
 class Board {
     constructor(engine, planet, facade) {
         this.numRows = 12;
         this.colors = [];
         this.blocks = [];
-        this.spawnInterval = 0.4 * 1000;
+        this.blocksMap = {}; // maps id to block
+        this.spawnInterval = 0.05 * 1000;
         this.blockId = 0;
         this.tick = 0;
         this.time = 0;
+        this.isDirtyForMatches = false;
+        this.compoundMatches = [];
         this.engine = engine;
         this.planet = planet;
         this.numColumns = this.planet.numColumns;
-        this.dimensions = new Rectangle_1.Rectangle(0, 0, this.numRows * blockHeight, this.numColumns * blockHeight);
+        this.dimensions = new Rectangle_1.Rectangle(0, 0, this.numRows * Block_1.Block.HEIGHT, this.numColumns * Block_1.Block.HEIGHT);
         for (let i = 0; i < this.numColumns; i++) {
             this.blocks.push([]);
         }
         this.facade = facade;
-        this.ground = new YHitbox_1.YHitbox(this.dimensions.getBottom(), 100);
-        let spawnerInterval = 0.4 * 1000;
-        this.spawner = new Timer(this, () => {
-            this.spawnBlockRandom();
-        }, spawnerInterval, true).start();
+        this.ground = new YHitbox_1.YHitbox(this.dimensions.getBottom(), Block_1.Block.HEIGHT);
+        this.spawner = new Timer_1.Timer(this, () => {
+            var res = this.spawnBlockRandom();
+            if (!res) {
+                this.spawner.stop();
+            }
+        }, this.spawnInterval, true).start();
         console.log(this);
     }
     forEachBlock(fn) {
@@ -460,56 +532,430 @@ class Board {
             });
         });
     }
+    getBlock(blockId) {
+        return this.blocksMap[blockId];
+    }
+    getBlockAbove(block) {
+        if (typeof block === 'number') {
+            block = this.getBlock(block);
+        }
+        let colIdx = block.columnIdx;
+        let slotIdx = block.slotIdx;
+        return this.blocks[colIdx][slotIdx + 1];
+    }
+    getBlockBelow(block) {
+        if (typeof block === 'number') {
+            block = this.getBlock(block);
+        }
+        let colIdx = block.columnIdx;
+        let slotIdx = block.slotIdx;
+        return this.blocks[colIdx][slotIdx - 1];
+    }
+    getBlockDirectBelow(block) {
+        var res = this.getBlockBelow(block);
+        if (res && res.hitbox.top === block.hitbox.getBottom() + 1) {
+            return res;
+        }
+        return undefined;
+    }
     step() {
         this.time += this.engine.stepInterval;
-        if (this.blockId > 100) {
-            return;
-        }
         this.forEachBlock((block, idx) => {
+            block.contactBelowPrev = block.contactBelow;
             // block physics
             block.hitbox.top = block.hitbox.top + (block.curVelocity * this.engine.BASE_LOGICAL_FPS / this.engine.stepInterval);
-            if (idx === 0 && block.hitbox.collidesBelow(this.ground)) {
-                block.hitbox.moveToContact(this.ground);
-            }
-            else {
-                let nextBlock = this.blocks[block.columnIdx][idx - 1];
-                if (nextBlock && block.hitbox.collidesBelow(nextBlock.hitbox)) {
-                    block.hitbox.moveToContact(nextBlock.hitbox);
+            var hitboxBelow = idx === 0 ? this.ground : this.blocks[block.columnIdx][idx - 1].hitbox;
+            if (block.hitbox.collidesBelow(hitboxBelow)) {
+                block.hitbox.moveToContact(hitboxBelow);
+                block.contactBelow = true;
+                if (block.selectable === false) {
+                    block.activateSelectable();
+                }
+                if (block.contactBelowPrev === false) {
+                    this.isDirtyForMatches = true;
                 }
             }
+            else if (!this.getBlockDirectBelow(block)) {
+                block.contactBelow = false;
+            }
         });
-        this.tick++;
-        this.spawner.step();
-    }
-    // Returns the next block under this one, even if they aren't in contact
-    getNextBlockBelow(block) {
-        let colIdx = block.columnIdx;
-        let blockIdx = block.blockIdx;
-        if (blockIdx === 0) {
-            return null;
+        if (this.isDirtyForMatches) {
+            this.compoundMatches = this.processMatches();
+            this.isDirtyForMatches = false;
+            if (this.compoundMatches) {
+                this.compoundMatches.forEach((comp) => {
+                    comp.blocks.forEach((blk) => {
+                        blk.setType(BlockType_1.BlockType.ROCKET);
+                    });
+                });
+            }
         }
-        return this.blocks[colIdx][blockIdx - 1];
+        if (this.debugMaxBlocks && this.blockId > this.debugMaxBlocks) {
+            this.spawner.stop();
+        }
+        else {
+            this.spawner.step();
+        }
+        this.tick++;
     }
     getRandomColumnIdx() {
         let idx = util_1.randInt(0, this.numColumns);
         return idx;
     }
+    columnIsFull(colIdx) {
+        return this.blocks[colIdx].length >= this.numRows;
+    }
+    getNonFullColumnsIdxs() {
+        var res = [];
+        for (let i = 0; i < this.numColumns; i++) {
+            if (this.columnIsFull(i) === false) {
+                res.push(i);
+            }
+        }
+        return res;
+    }
+    getRandomNonFullColumnIdx() {
+        var openColumns = this.getNonFullColumnsIdxs();
+        if (openColumns.length === 0) {
+            return undefined;
+        }
+        var colIdx = openColumns[util_1.randInt(0, openColumns.length)];
+        return colIdx;
+    }
     spawnBlock(colIdx, color) {
         var col = this.blocks[colIdx];
-        var blockIdx = col.length;
-        var block = new Block_1.Block(colIdx, blockIdx, color, this.blockId++);
+        var slotIdx = col.length;
+        var block = new Block_1.Block(colIdx, slotIdx, BlockType_1.BlockType.NORMAL, this.blockId++)
+            .setColor(color);
         col.push(block);
+        this.blocksMap[block.id] = block;
         return block;
     }
     spawnBlockRandom() {
-        return this.spawnBlock(this.blockId === 0 ? 2 : this.getRandomColumnIdx(), this.planet.getRandomColor());
+        var colIdx = this.getRandomNonFullColumnIdx();
+        if (colIdx === undefined) {
+            return undefined;
+        }
+        return this.spawnBlock(colIdx, this.chooseColor(colIdx, this.blocks[colIdx].length));
+    }
+    getRandomColor() {
+        let rng = util_1.rand(0, this.planet.distribSum);
+        let colorIdx = 0;
+        // console.log('rng ' + rng);
+        for (; colorIdx < this.planet.distribArr.length; colorIdx++) {
+            rng -= this.planet.distribArr[colorIdx].weight;
+            if (rng < 0) {
+                break;
+            }
+        }
+        // console.log('   ' + this.distribArr[colorIdx].colorStr);
+        return this.planet.distribArr[colorIdx].color;
+    }
+    chooseColor(colIdx, slotIdx) {
+        var color = this.getRandomColor();
+        var tried = {};
+        while (this.validateColor(colIdx, slotIdx, color) === false) {
+            tried[color] = 0;
+            // get a new random color that hasn't been tried yet
+            while (tried[color] !== undefined) {
+                color = this.getRandomColor();
+            }
+        }
+        return color;
+    }
+    getColorAt(colIdx, slotIdx) {
+        var col = this.blocks[colIdx];
+        if (col === undefined) {
+            return undefined;
+        }
+        var blk = col[slotIdx];
+        return blk ? blk.color : undefined;
+    }
+    // checks if placing a color at a certain columnXslot could create a natural match-3
+    validateColor(colIdx, slotIdx, color) {
+        // check horiz
+        var slotRange = this.blocks.map((col) => (col[slotIdx]));
+        var neighbor0 = this.getColorAt(colIdx - 2, slotIdx);
+        var neighbor1 = this.getColorAt(colIdx - 1, slotIdx);
+        var neighbor2 = this.getColorAt(colIdx + 1, slotIdx);
+        var neighbor3 = this.getColorAt(colIdx + 2, slotIdx);
+        if ((neighbor0 === color && neighbor1 === color)
+            || (neighbor1 === color && neighbor2 === color)
+            || (neighbor2 === color && neighbor3 === color)) {
+            return false;
+        }
+        // check vert
+        var colRange = this.blocks[colIdx];
+        neighbor0 = this.getColorAt(colIdx, slotIdx - 2);
+        neighbor1 = this.getColorAt(colIdx, slotIdx - 1);
+        neighbor2 = this.getColorAt(colIdx, slotIdx + 1);
+        neighbor3 = this.getColorAt(colIdx, slotIdx + 2);
+        if ((neighbor0 === color && neighbor1 === color)
+            || (neighbor1 === color && neighbor2 === color)
+            || (neighbor2 === color && neighbor3 === color)) {
+            return false;
+        }
+        return true; // no potential matches found
+    }
+    swapBlocks(a, b) {
+        // TODO run within the step logic, not outside it
+        if (!a.selectable || !b.selectable) {
+            return;
+        }
+        if (a.columnIdx !== b.columnIdx) {
+            return;
+        }
+        if (Math.abs(a.slotIdx - b.slotIdx) !== 1) {
+            return;
+        }
+        var col = a.columnIdx;
+        var tmpA = a;
+        var tmpAStackIdx = a.slotIdx;
+        var tmpAHitboxTop = a.hitbox.top;
+        this.blocks[col][a.slotIdx] = b;
+        this.blocks[col][b.slotIdx] = tmpA;
+        a.slotIdx = b.slotIdx;
+        b.slotIdx = tmpAStackIdx;
+        a.hitbox.top = b.hitbox.top;
+        b.hitbox.top = tmpAHitboxTop;
+        this.isDirtyForMatches = true;
+    }
+    swapUp(block) {
+        var other = this.getBlockAbove(block);
+        if (other) {
+            this.swapBlocks(block, other);
+        }
+    }
+    swapDown(block) {
+        var other = this.getBlockBelow(block);
+        if (other) {
+            this.swapBlocks(block, other);
+        }
     }
     setFacade(facade) {
         this.facade = facade;
         return this.facade;
     }
+    processMatches() {
+        this.compoundMatches = [];
+        this.forEachBlock((blk) => {
+            blk.matchInfo = undefined;
+        });
+        var allMatchBlocks = [];
+        /* Generate simple matches */
+        for (let colIdx = 0; colIdx < this.numColumns; colIdx++) {
+            for (let slotIdx = 0; slotIdx < this.blocks[colIdx].length; slotIdx++) {
+                let refBlk = this.blocks[colIdx][slotIdx];
+                if (refBlk) {
+                    refBlk.matchInfo = refBlk.matchInfo ? refBlk.matchInfo : {};
+                    if (refBlk.matchInfo.hor === undefined) {
+                        let match = new matches_1.SimpleMatch([refBlk], true);
+                        for (let i = colIdx + 1; i < this.numColumns; i++) {
+                            let compareBlk = this.blocks[i][slotIdx];
+                            if (compareBlk !== undefined && refBlk.hasNormalMatch(compareBlk)) {
+                                match.add(compareBlk);
+                            }
+                            else {
+                                break; // non-existent or non-match. No more matches can follow
+                            }
+                        }
+                        // if is a valid simple match, then attach info to each of its blocks
+                        if (match.blocks.length >= 3) {
+                            match.blocks.forEach((blk) => {
+                                blk.matchInfo = blk.matchInfo ? blk.matchInfo : {};
+                                blk.matchInfo.hor = match;
+                                if (allMatchBlocks.indexOf(blk) === -1) {
+                                    allMatchBlocks.push(blk);
+                                }
+                            });
+                        }
+                    }
+                    if (refBlk.matchInfo.ver === undefined) {
+                        let match = new matches_1.SimpleMatch([refBlk], false);
+                        for (let i = slotIdx + 1; i < this.blocks[colIdx].length; i++) {
+                            let compareBlk = this.blocks[colIdx][i];
+                            if (compareBlk !== undefined && refBlk.hasNormalMatch(compareBlk)) {
+                                match.add(compareBlk);
+                            }
+                            else {
+                                break;
+                            }
+                        }
+                        if (match.blocks.length >= 3) {
+                            match.blocks.forEach((blk) => {
+                                blk.matchInfo = blk.matchInfo ? blk.matchInfo : {};
+                                blk.matchInfo.ver = match;
+                                if (allMatchBlocks.indexOf(blk) === -1) {
+                                    allMatchBlocks.push(blk);
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        /*
+        Convert simple matches into compound matches.
+        If a simple match intersects with another simple match, attach the other into the compound.
+        If the other is also a part of a compound, merge the two compounds.
+        */
+        allMatchBlocks.forEach((refBlk) => {
+            let refMatch = refBlk.matchInfo;
+            if (refMatch !== undefined) {
+                if (refMatch.compound === undefined) {
+                    refMatch.compound = new matches_1.CompoundMatch();
+                }
+                ['hor', 'ver'].forEach((simp) => {
+                    if (refMatch[simp] !== undefined) {
+                        let simple = refMatch[simp];
+                        refMatch.compound.attachSimpleMatch(simple);
+                        simple.blocks.forEach((simpleMember) => {
+                            let toAbsorb = simpleMember.matchInfo.compound;
+                            if (toAbsorb !== undefined && toAbsorb !== refMatch.compound) {
+                                refMatch.compound.absorbCompoundMatch(toAbsorb);
+                            }
+                            simpleMember.matchInfo.compound = refMatch.compound;
+                        });
+                    }
+                });
+            }
+        });
+        var compounds = [];
+        allMatchBlocks.forEach((blk) => {
+            var comp = blk.matchInfo.compound;
+            if (compounds.indexOf(comp) === -1) {
+                compounds.push(comp);
+            }
+        });
+        if (compounds.length > 0) {
+            console.log(compounds);
+        }
+        return compounds;
+    }
 }
 exports.Board = Board;
+
+
+/***/ }),
+/* 8 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const YHitbox_1 = __webpack_require__(2);
+const BlockType_1 = __webpack_require__(1);
+class Block {
+    constructor(columnIdx, slotIdx, type, id) {
+        this.curVelocity = 60;
+        this.selectable = false; // can block be matched with other blocks
+        this.contactBelow = false; // is touching a solid directly below
+        this.contactBelowPrev = false; // contactBelow for previous frame
+        this.columnIdx = columnIdx;
+        this.slotIdx = slotIdx;
+        this.hitbox = new YHitbox_1.YHitbox(Block.SPAWN_POSITION, Block.HEIGHT);
+        this.id = id;
+        this.type = type;
+    }
+    // step(): void {
+    // 	this.hitbox.move(this.curVelocity);
+    // }
+    setColor(blockColor) {
+        this.color = blockColor;
+        return this;
+    }
+    isRising() {
+        return this.curVelocity > 0;
+    }
+    isFalling() {
+        return this.curVelocity < 0;
+    }
+    isStationary() {
+        return this.curVelocity === 0;
+    }
+    activateSelectable() {
+        this.selectable = true;
+        return this;
+    }
+    setType(type) {
+        // clear matches
+        this.matchInfo = undefined;
+        switch (type) {
+            case BlockType_1.BlockType.NORMAL:
+                break;
+            case BlockType_1.BlockType.GARBAGE:
+            case BlockType_1.BlockType.ROCKET:
+                this.color = undefined;
+                break;
+        }
+        return this;
+    }
+    hasNormalMatch(other) {
+        if (this.type === BlockType_1.BlockType.NORMAL && other.type === BlockType_1.BlockType.NORMAL
+            && this.color === other.color) {
+            return true;
+        }
+        return false;
+    }
+}
+Block.HEIGHT = 100;
+Block.SPAWN_POSITION = -100;
+exports.Block = Block;
+
+
+/***/ }),
+/* 9 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+class Rectangle {
+    constructor(top, left, height, width) {
+        this.top = top;
+        this.left = left;
+        this.height = height;
+        this.width = width;
+    }
+    getBottom() {
+        return this.top + this.height;
+    }
+    right() {
+        return this.left + this.width;
+    }
+}
+exports.Rectangle = Rectangle;
+
+
+/***/ }),
+/* 10 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+function randInt(from, to, inclusive) {
+    var range = to - from;
+    var tmp = Math.floor(Math.random() * (range + (inclusive ? 1 : 0)));
+    return from + tmp;
+}
+exports.randInt = randInt;
+function rand(from, to) {
+    // to-exclusive
+    var range = to - from;
+    var tmp = Math.random() * range;
+    return from + tmp;
+}
+exports.rand = rand;
+
+
+/***/ }),
+/* 11 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
 var TimerState;
 (function (TimerState) {
     TimerState[TimerState["STOP"] = 0] = "STOP";
@@ -562,79 +1008,82 @@ class Timer {
         this.action();
     }
 }
+exports.Timer = Timer;
 
 
 /***/ }),
-/* 7 */
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const YHitbox_1 = __webpack_require__(1);
-// movement
-class Block {
-    constructor(columnIdx, blockIdx, color, id) {
-        this.curVelocity = 30;
-        this.matchable = false; // can block be matched with other blocks
-        this.columnIdx = columnIdx;
-        this.blockIdx = blockIdx;
-        this.hitbox = new YHitbox_1.YHitbox(0, 100);
-        this.color = color;
-        this.id = id;
+/* A match consisting of one straight line */
+class SimpleMatch {
+    constructor(blocks, isHorizontal) {
+        this.blocks = [];
+        this.blocks = blocks;
+        this.isHorizontal = isHorizontal;
     }
-    // step(): void {
-    // 	this.hitbox.move(this.curVelocity);
-    // }
-    setColor(blockColor) {
-        this.color = blockColor;
-    }
-    isRising() {
-        return this.curVelocity > 0;
-    }
-    isFalling() {
-        return this.curVelocity < 0;
-    }
-    isStationary() {
-        return this.curVelocity === 0;
+    add(block) {
+        this.blocks.push(block);
     }
 }
-exports.Block = Block;
+exports.SimpleMatch = SimpleMatch;
+/* One or more matches that connect/intersect */
+class CompoundMatch {
+    constructor() {
+        this.simpleMatches = [];
+        this.blocks = [];
+    }
+    attachSimpleMatch(simpleMatch) {
+        if (this.simpleMatches.indexOf(simpleMatch) === -1) {
+            this.simpleMatches.push(simpleMatch);
+            simpleMatch.blocks.forEach((blk) => {
+                if (this.blocks.indexOf(blk) === -1) {
+                    this.blocks.push(blk);
+                }
+            });
+        }
+    }
+    absorbCompoundMatch(match) {
+        match.simpleMatches.forEach((sm) => {
+            this.attachSimpleMatch(sm);
+        });
+    }
+}
+exports.CompoundMatch = CompoundMatch;
+/*
+some match scenarios...
+F = blocks falling into place
+
+Faa
+Faa
+a
+
+aFa
+ a
+ a
+    
+aFF
+ aa
+ aa
+    
+aaF
+aaF
+  a
+
+*/ 
 
 
 /***/ }),
-/* 8 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-class Rectangle {
-    constructor(top, left, height, width) {
-        this.top = top;
-        this.left = left;
-        this.height = height;
-        this.width = width;
-    }
-    getBottom() {
-        return this.top + this.height;
-    }
-    right() {
-        return this.left + this.width;
-    }
-}
-exports.Rectangle = Rectangle;
-
-
-/***/ }),
-/* 9 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const BlockColor_1 = __webpack_require__(0);
-const util_1 = __webpack_require__(2);
 class Planet {
     constructor(data) {
         this.distribArr = [];
@@ -644,27 +1093,14 @@ class Planet {
         this.inputDistrib = data.colors;
         this.distribSum = 0;
         Object.keys(this.inputDistrib).forEach((colorStr) => {
-            this.colors.push(BlockColor_1.strToColor(colorStr));
+            this.colors.push(BlockColor_1.BlockColorUtil.strToColor(colorStr));
             this.distribArr.push({
-                color: BlockColor_1.strToColor(colorStr),
+                color: BlockColor_1.BlockColorUtil.strToColor(colorStr),
                 colorStr: colorStr,
                 weight: this.inputDistrib[colorStr],
             });
             this.distribSum += this.inputDistrib[colorStr];
         });
-    }
-    getRandomColor() {
-        let rng = util_1.rand(0, this.distribSum);
-        let colorIdx = 0;
-        // console.log('rng ' + rng);
-        for (; colorIdx < this.distribArr.length; colorIdx++) {
-            rng -= this.distribArr[colorIdx].weight;
-            if (rng < 0) {
-                break;
-            }
-        }
-        // console.log('   ' + this.distribArr[colorIdx].colorStr);
-        return this.distribArr[colorIdx].color;
     }
 }
 exports.Planet = Planet;

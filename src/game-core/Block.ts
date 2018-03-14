@@ -71,6 +71,14 @@ export class Block {
 		return this;
 	}
 
+	hasNormalMatch(other: Block): boolean {
+		if(this.type === BlockType.NORMAL && other.type === BlockType.NORMAL
+		&& this.color === other.color) {
+			return true;
+		}
+		return false;
+	}
+
 	// getSittingOn(): Block {}
 	// getSittingAbove(): Block {}
 }

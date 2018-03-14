@@ -27,7 +27,7 @@ export class Board {
 	blocks: Block[][] = [];
 	blocksMap: any = {};		// maps id to block
 
-	spawnInterval: number = 0.05 * 1000;
+	spawnInterval: number = 0.2 * 1000;
 	spawner: Timer;
 
 	facade: ClientFacade;
@@ -105,7 +105,7 @@ export class Board {
 
 			// block physics
 
-			block.hitbox.top = block.hitbox.top + (block.curVelocity * this.engine.BASE_LOGICAL_FPS / this.engine.stepInterval);
+			block.hitbox.top = block.hitbox.top + (block.curVelocity * this.engine.BASE_LOGICAL_FPS / this.engine.fps);
 
 			var hitboxBelow: YHitbox = idx === 0 ? this.ground : this.blocks[block.columnIdx][idx - 1].hitbox;
 			if(block.hitbox.collidesBelow(hitboxBelow)) {
@@ -125,6 +125,13 @@ export class Board {
 		if(this.isDirtyForMatches) {
 			this.compoundMatches = this.processMatches();
 			this.isDirtyForMatches = false;
+			if(this.compoundMatches) {
+				this.compoundMatches.forEach((comp) => {
+					comp.blocks.forEach((blk)=>{
+						blk.setType(BlockType.ROCKET);
+					});
+				});
+			}
 		}
 
 		if(this.debugMaxBlocks && this.blockId > this.debugMaxBlocks) {
@@ -305,7 +312,7 @@ export class Board {
 						let match: SimpleMatch = new SimpleMatch([refBlk], true);
 						for(let i=colIdx + 1; i<this.numColumns; i++) {
 							let compareBlk: Block = this.blocks[i][slotIdx];
-							if(compareBlk !== undefined && refBlk.color === compareBlk.color) {
+							if(compareBlk !== undefined && refBlk.hasNormalMatch(compareBlk)) {
 								match.add(compareBlk);
 							} else {
 								break; // non-existent or non-match. No more matches can follow
@@ -327,7 +334,7 @@ export class Board {
 						let match: SimpleMatch = new SimpleMatch([refBlk], false);
 						for(let i=slotIdx + 1; i<this.blocks[colIdx].length; i++) {
 							let compareBlk: Block = this.blocks[colIdx][i];
-							if(compareBlk !== undefined && refBlk.color === compareBlk.color) {
+							if(compareBlk !== undefined && refBlk.hasNormalMatch(compareBlk)) {
 								match.add(compareBlk);
 							} else {
 								break;

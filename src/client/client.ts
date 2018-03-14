@@ -4,8 +4,9 @@ import { Round } from '../game-core/Round';
 import { BlockColor } from '../game-core/BlockColor';
 import { Planet } from '../game-core/Planet';
 
-var fps = 30;
-var game = new Round(fps);
+var targetFps = 50;
+const gameStepInterval: number = 1000 / targetFps;
+var game = new Round(targetFps);
 (<any>window).game = game;
 var board: Board;
 var facade: ClientFacade;
@@ -49,7 +50,6 @@ container.appendChild(app.view)
 var now: number;
 var lastTime: number;
 var delta: number = 0;		// elapsed time
-const gameStepInterval: number = 1000 / fps;
 const maxCatchup: number = 3 * 1000;	// cap on catchup steps
 
 function mainStep() {

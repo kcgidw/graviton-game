@@ -1,22 +1,24 @@
-enum BlockColor {
+export enum BlockColor {
 	RED, YELLOW, MINT, FOREST, AQUA, PURPLE, PINK, BROWN,
 }
 
-const COLORS: string[] = ['RED', 'YELLOW', 'MINT', 'FOREST', 'AQUA', 'PURPLE', 'PINK', 'BROWN'];
+export const COLORS: string[] = ['RED', 'YELLOW', 'MINT', 'FOREST', 'AQUA', 'PURPLE', 'PINK', 'BROWN'];
 
-function colorToFilename(color: BlockColor): string {
-	return COLORS[color].toLowerCase();
-}
-
-function strToColor(str: string): BlockColor {
-	var res = BlockColor[str];
-	if(res === undefined) {
-		throw new Error('strtocolor ' + str);
+export class BlockColorUtil {
+	static colorToFilename(color: BlockColor): string {
+		return COLORS[color].toLowerCase();
 	}
-	return res;
+	static colorToTexture(color: BlockColor): PIXI.Texture {
+		return PIXI.loader.resources[this.colorToFilename(color)].texture;
+	}
+	static strToColor(str: string): BlockColor {
+		var res = BlockColor[str];
+		if(res === undefined) {
+			throw new Error('strtocolor ' + str);
+		}
+		return res;
+	}
 }
-
-export {BlockColor, COLORS, colorToFilename, strToColor};
 
 // const BlockColorMap = {
 // 	RED: 1,
