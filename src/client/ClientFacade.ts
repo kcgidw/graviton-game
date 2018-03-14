@@ -94,6 +94,7 @@ export class ClientFacade {
 					bs = this.addBlock(block);
 				}
 				bs.updateSpritePosition(block.hitbox.top);
+				bs.updateTexture();
 			});
 		});
 	}

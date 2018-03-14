@@ -58,8 +58,11 @@ export class Block {
 	}
 
 	setType(type: BlockType): Block {
+		this.type = type;
+
 		// clear matches
 		this.matchInfo = undefined;
+		
 		switch(type) {
 			case BlockType.NORMAL:
 				break;

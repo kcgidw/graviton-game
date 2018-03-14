@@ -43,8 +43,8 @@ export class BlockSprite {
 				this.sprite.texture = BlockColorUtil.colorToTexture(this.block.color);
 				break;
 			case BlockType.ROCKET:
-				break;
 			case BlockType.GARBAGE:
+				this.sprite.texture = BlockColorUtil.typeToTexture(BlockType.ROCKET);
 				break;
 		}
 	}

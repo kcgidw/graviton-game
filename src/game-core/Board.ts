@@ -27,7 +27,7 @@ export class Board {
 	blocks: Block[][] = [];
 	blocksMap: any = {};		// maps id to block
 
-	spawnInterval: number = 0.2 * 1000;
+	spawnInterval: number = 0.1 * 1000;
 	spawner: Timer;
 
 	facade: ClientFacade;
@@ -67,10 +67,10 @@ export class Board {
 		console.log(this);
 	}
 
-	forEachBlock(fn: (block: Block, idx: number)=>any) {
-		this.blocks.forEach((col) => {
-			col.forEach((block, idx) => {	// forEach iterates in asc order
-				fn(block, idx);
+	forEachBlock(fn: (block: Block, colIdx?: number, slotIdx?: number)=>any) {
+		this.blocks.forEach((col, colIdx) => {
+			col.forEach((block, slotIdx) => {	// forEach iterates in asc order
+				fn(block, colIdx, slotIdx);
 			});
 		});
 	}
@@ -100,14 +100,14 @@ export class Board {
 	step() {
 		this.time += this.engine.stepInterval;
 
-		this.forEachBlock((block, idx) => {
+		this.forEachBlock((block, colIdx, slotIdx) => {
 			block.contactBelowPrev = block.contactBelow;
 
 			// block physics
 
 			block.hitbox.top = block.hitbox.top + (block.curVelocity * this.engine.BASE_LOGICAL_FPS / this.engine.fps);
 
-			var hitboxBelow: YHitbox = idx === 0 ? this.ground : this.blocks[block.columnIdx][idx - 1].hitbox;
+			var hitboxBelow: YHitbox = slotIdx === 0 ? this.ground : this.blocks[block.columnIdx][slotIdx - 1].hitbox;
 			if(block.hitbox.collidesBelow(hitboxBelow)) {
 				block.hitbox.moveToContact(hitboxBelow);
 				block.contactBelow = true;
@@ -125,6 +125,8 @@ export class Board {
 		if(this.isDirtyForMatches) {
 			this.compoundMatches = this.processMatches();
 			this.isDirtyForMatches = false;
+
+			/* ignitions */
 			if(this.compoundMatches) {
 				this.compoundMatches.forEach((comp) => {
 					comp.blocks.forEach((blk)=>{
