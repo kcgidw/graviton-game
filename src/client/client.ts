@@ -4,16 +4,19 @@ import { Round } from '../game-core/Round';
 import { BlockColor } from '../game-core/BlockColor';
 import { Planet } from '../game-core/Planet';
 
-var targetFps = 50;
-const gameStepInterval: number = 1000 / targetFps;
-var game = new Round(targetFps);
+var TARGET_FPS = 50;
+var ENABLE_CATCHUP: boolean = false;
+var MAX_CATCHUP_TIME = 3 * 1000;
+
+var gameStepInterval: number = 1000 / TARGET_FPS;
+var game = new Round(TARGET_FPS);
 (<any>window).game = game;
 var board: Board;
 var facade: ClientFacade;
 
-const canvasW = 720;
-const canvasH = 1280;
-const gameAspectRatio = canvasW / canvasH;
+var canvasW = 720;
+var canvasH = 1280;
+var gameAspectRatio = canvasW / canvasH;
 var app = new PIXI.Application({ width: canvasW, height: canvasH });
 // app.renderer.autoResize = true;
 // scale the pixi app and its stage
@@ -50,17 +53,22 @@ container.appendChild(app.view)
 var now: number;
 var lastTime: number;
 var delta: number = 0;		// elapsed time
-const maxCatchup: number = 3 * 1000;	// cap on catchup steps
 
 function mainStep() {
 	now = timestamp();
 	delta += now - lastTime;
-	delta = delta > maxCatchup ? maxCatchup : delta;
+	delta = delta > MAX_CATCHUP_TIME ? MAX_CATCHUP_TIME : delta;
 
 	let numSteps = 0;
-	while (delta > gameStepInterval) {
-		// when enough time has elapsed, trigger game step(s)
-		// console.log(delta, gameStepInterval);
+	if(ENABLE_CATCHUP) {
+		while (delta > gameStepInterval) {
+			// when enough time has elapsed, trigger game step(s)
+			// console.log(delta, gameStepInterval);
+			board.step();
+			delta -= gameStepInterval;
+			numSteps++;
+		}
+	} else {
 		board.step();
 		delta -= gameStepInterval;
 		numSteps++;
@@ -75,7 +83,12 @@ function mainStep() {
 function beginRound() {
 	board = game.createBoard(new Planet({
 		columns: 9,
-		physics: {},
+		physics: {
+			gravity: 0.04,
+			thrustIV: -2,
+			thrustAccel: -0.1,
+			thrustDur: 0.2 * 1000
+		},
 		colors: {
 			YELLOW: 28,
 			RED: 25,

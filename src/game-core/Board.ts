@@ -27,7 +27,7 @@ export class Board {
 	blocks: Block[][] = [];
 	blocksMap: any = {};		// maps id to block
 
-	spawnInterval: number = 0.1 * 1000;
+	spawnInterval: number = 0.3 * 1000;
 	spawner: Timer;
 
 	facade: ClientFacade;
@@ -91,7 +91,14 @@ export class Board {
 	}
 	getBlockDirectBelow(block: Block): Block {
 		var res = this.getBlockBelow(block);
-		if(res && res.hitbox.top === block.hitbox.getBottom() + 1) {
+		if(res && res.hitbox.top === block.hitbox.getBottom()) {
+			return res;
+		}
+		return undefined;
+	}
+	getBlockDirectAbove(block: Block): Block {
+		var res = this.getBlockAbove(block);
+		if(res && res.hitbox.getBottom() === block.hitbox.top) {
 			return res;
 		}
 		return undefined;
@@ -100,17 +107,44 @@ export class Board {
 	step() {
 		this.time += this.engine.stepInterval;
 
+		if(this.debugMaxBlocks && this.blockId > this.debugMaxBlocks) {
+			this.spawner.stop();
+		} else {
+			this.spawner.step();
+		}
+
 		this.forEachBlock((block, colIdx, slotIdx) => {
 			block.contactBelowPrev = block.contactBelow;
 
 			// block physics
 
-			block.hitbox.top = block.hitbox.top + (block.curVelocity * this.engine.BASE_LOGICAL_FPS / this.engine.fps);
+			block.hitbox.top = block.hitbox.top + (block.velocity * this.engine.BASE_LOGICAL_FPS / this.engine.fps);
+			block.forces.gravity += this.planet.physics.gravity;
+			var accel: number = block.forces.gravity + block.forces.thrust;
+			block.velocity += accel;
 
-			var hitboxBelow: YHitbox = slotIdx === 0 ? this.ground : this.blocks[block.columnIdx][slotIdx - 1].hitbox;
+			if(block.forces.thrust < 0) {
+				// block.forces.thrust += this.planet.physics.thrustAccel;
+			}
+			if(block.forces.thrustTimer !== undefined) {
+				block.forces.thrustTimer.step();
+			}
+
+			var hitboxBelow: YHitbox;
+			var velBelow: number;
+			if(slotIdx === 0) {
+				hitboxBelow = this.ground;
+				velBelow = 0;
+			} else {
+				var blkBelow = this.blocks[block.columnIdx][slotIdx - 1];
+				hitboxBelow = blkBelow.hitbox;
+				velBelow = blkBelow.velocity;
+			}
 			if(block.hitbox.collidesBelow(hitboxBelow)) {
 				block.hitbox.moveToContact(hitboxBelow);
 				block.contactBelow = true;
+				block.forces.gravity = 0;
+				block.velocity = velBelow;
 				if(block.selectable === false) {
 					block.activateSelectable();
 				}
@@ -122,24 +156,30 @@ export class Board {
 			}
 		});
 
+		this.processExitedBlocks();	// TODO
+
 		if(this.isDirtyForMatches) {
 			this.compoundMatches = this.processMatches();
-			this.isDirtyForMatches = false;
-
 			/* ignitions */
 			if(this.compoundMatches) {
 				this.compoundMatches.forEach((comp) => {
 					comp.blocks.forEach((blk)=>{
 						blk.setType(BlockType.ROCKET);
 					});
+					var bottomBlks: Block[] = comp.getBottomBlocks();
+					bottomBlks.forEach((blk) => {
+						blk.forces.gravity = 0;
+						blk.forces.thrust = this.planet.physics.thrustIV;
+						blk.velocity = this.planet.physics.thrustIV;
+						blk.forces.thrustTimer = new Timer(this, () => {
+							blk.forces.thrust = 0;
+						}, this.planet.physics.thrustDur, false).start();
+						console.log(blk);
+					});
+					console.log(bottomBlks);
 				});
 			}
-		}
-
-		if(this.debugMaxBlocks && this.blockId > this.debugMaxBlocks) {
-			this.spawner.stop();
-		} else {
-			this.spawner.step();
+			this.isDirtyForMatches = false;
 		}
 
 		this.tick++;
@@ -249,6 +289,10 @@ export class Board {
 		return true;		// no potential matches found
 	}
 
+	processExitedBlocks() {
+
+	}
+
 	swapBlocks(a: Block, b: Block): void {
 		// TODO run within the step logic, not outside it
 		if(!a.selectable || !b.selectable) {
@@ -278,13 +322,13 @@ export class Board {
 		this.isDirtyForMatches = true;
 	}
 	swapUp(block: Block): void {
-		var other: Block =  this.getBlockAbove(block);
+		var other: Block =  this.getBlockDirectAbove(block);
 		if(other) {
 			this.swapBlocks(block,other);
 		}
 	}
 	swapDown(block: Block): void {
-		var other: Block =  this.getBlockBelow(block);
+		var other: Block =  this.getBlockDirectBelow(block);
 		if(other) {
 			this.swapBlocks(block,other);
 		}
@@ -386,12 +430,17 @@ export class Board {
 
 		var compounds: CompoundMatch[] = [];
 		allMatchBlocks.forEach((blk)=>{
+			// if the selected block is in a match, deselect it
+			if(this.facade && this.facade.selectedBlock && blk === this.facade.selectedBlock.block) {
+				this.facade.selectBlock(undefined);
+			}
+			
 			var comp = blk.matchInfo.compound;
 			if(compounds.indexOf(comp) === -1) {
 				compounds.push(comp);
 			}
 		});
-		if(compounds.length > 0) {
+		if(compounds.length > 0) {		// any matches this step
 			console.log(compounds);
 		}
 		return compounds;

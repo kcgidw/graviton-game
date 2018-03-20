@@ -35,6 +35,32 @@ export class CompoundMatch {
 			this.attachSimpleMatch(sm);
 		});
 	}
+	getColumnIdxs(): number[] {
+		var colIdxs: number[] = [];
+		this.blocks.forEach((blk) => {
+			var col: number = blk.columnIdx;
+			if(colIdxs.indexOf(col) === -1) {
+				colIdxs.push(col);
+			}
+		});
+		return colIdxs;
+	}
+	getBottomBlocks(): Block[] {
+		var bottoms = {};
+		this.blocks.forEach((blk) => {
+			var col = blk.columnIdx;
+			var slot = blk.slotIdx;
+			if(bottoms[col] === undefined) {
+				bottoms[col] = blk;
+			} else {
+				var compare = bottoms[col];
+				if(blk.slotIdx < compare.slotIdx) {
+					bottoms[col] = blk;
+				}
+			}
+		});
+		return Object.keys(bottoms).map((k) => bottoms[k]);
+	}
 }
 
 /*

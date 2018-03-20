@@ -2,6 +2,7 @@ import {YHitbox} from './YHitbox';
 import {BlockColor} from './BlockColor';
 import { SimpleMatch, CompoundMatch } from './matches';
 import { BlockType } from './BlockType';
+import { Timer } from './Timer';
 
 export class Block {
 	static HEIGHT: number = 100;
@@ -14,7 +15,7 @@ export class Block {
 	type: BlockType;
 
 	hitbox: YHitbox;
-	curVelocity: number = 60;
+	velocity: number = 20;
 
 	color: BlockColor;
 
@@ -25,6 +26,12 @@ export class Block {
 
 	matchInfo: IMatchInfo;
 
+	forces: IForceInfo = {
+		gravity: 0,
+		thrust: 0,
+		thrustTimer: undefined,
+	};
+
 	constructor(columnIdx: number, slotIdx: number, type: BlockType, id: number) {
 		this.columnIdx = columnIdx;
 		this.slotIdx = slotIdx;
@@ -34,7 +41,7 @@ export class Block {
 	}
 
 	// step(): void {
-	// 	this.hitbox.move(this.curVelocity);
+	// 	this.hitbox.move(this.velocity);
 	// }
 
 	setColor(blockColor: BlockColor): Block {
@@ -43,13 +50,13 @@ export class Block {
 	}
 
 	isRising(): boolean {
-		return this.curVelocity > 0;
+		return this.velocity > 0;
 	}
 	isFalling(): boolean {
-		return this.curVelocity < 0;
+		return this.velocity < 0;
 	}
 	isStationary(): boolean {
-		return this.curVelocity === 0;
+		return this.velocity === 0;
 	}
 
 	activateSelectable(): Block {
@@ -89,4 +96,10 @@ export interface IMatchInfo {
 	hor?: SimpleMatch;
 	ver?: SimpleMatch;
 	compound?: CompoundMatch;
+}
+
+export interface IForceInfo {
+	gravity: number;
+	thrust: number;
+	thrustTimer: Timer;
 }

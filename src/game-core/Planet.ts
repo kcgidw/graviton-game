@@ -7,16 +7,17 @@ interface IDistribArrItem {
 	colorStr: string;
 	weight: number;
 }
-interface IPlanetPhysics {
+export interface IPlanetPhysics {
 	blockMass: number;
 	garbageMass: number;
+
 	fallIV: number;
 	gravity: number;
 
-	launchIV: number;		// initial velocity (rising)
-	launchAccel: number;	// launch acceleration
-	launchAccelDur: number;	// duration of launchROC1
-	launchMin: number;		// min rocket descent (falling)
+	thrustIV: number;
+	thrustDur: number;
+	thrustAccel: number;
+	descentCap: number;		// min rocket descent (falling)
 }
 
 export class Planet {
