@@ -1,14 +1,14 @@
-import {Block, IMatchInfo} from './Block';
-import {BlockColor, COLORS} from './BlockColor';
+import {Block, IMatchInfo} from './block/Block';
+import {BlockColor, COLORS} from './block/BlockColor';
 import {ClientFacade} from '../client/ClientFacade';
 import {Rectangle} from './Rectangle';
-import { YHitbox } from './YHitbox';
+import { YHitbox } from './block/YHitbox';
 import { Round } from './Round';
 import { Planet } from './Planet';
 import { rand, randInt } from '../util';
 import { Timer } from './Timer';
 import { CompoundMatch, SimpleMatch } from './matches';
-import { BlockType } from './BlockType';
+import { BlockType } from './block/BlockType';
 
 /* TODO
 - Load a cache of block objects?

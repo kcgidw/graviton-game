@@ -1,8 +1,8 @@
 import {YHitbox} from './YHitbox';
 import {BlockColor} from './BlockColor';
-import { SimpleMatch, CompoundMatch } from './matches';
+import { SimpleMatch, CompoundMatch } from '../matches';
 import { BlockType } from './BlockType';
-import { Timer } from './Timer';
+import { Timer } from '../Timer';
 
 export class Block {
 	static HEIGHT: number = 100;

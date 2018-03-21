@@ -1,6 +1,6 @@
-import { BlockColor, BlockColorUtil } from "./BlockColor";
+import { BlockColor, BlockColorUtil } from "./block/BlockColor";
 import { randInt,rand } from "../util";
-import { Block } from "./Block";
+import { Block } from "./block/Block";
 
 interface IDistribArrItem {
 	color: BlockColor;

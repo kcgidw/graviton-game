@@ -1,4 +1,4 @@
-import { Block } from "./Block";
+import { Block } from "./block/Block";
 
 /* A match consisting of one straight line */
 export class SimpleMatch {

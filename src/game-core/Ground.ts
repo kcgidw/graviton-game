@@ -1,4 +1,4 @@
-import { YHitbox } from "./YHitbox";
+import { YHitbox } from "./block/YHitbox";
 
 export class Ground {
 	hitbox: YHitbox;

@@ -1,8 +1,8 @@
-import { Block } from "../game-core/Block";
+import { Block } from "../game-core/block/Block";
 import { Board } from "../game-core/Board";
 import { PointerState } from "./ClientFacade";
-import { BlockType } from "../game-core/BlockType";
-import { BlockColorUtil } from "../game-core/BlockColor";
+import { BlockType } from "../game-core/block/BlockType";
+import { BlockColorUtil } from "../game-core/block/BlockColor";
 
 export class BlockSprite {
 	block: Block;

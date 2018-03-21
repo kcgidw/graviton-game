@@ -1,7 +1,6 @@
 import { Board } from '../game-core/Board';	// TODO webpack to es5
 import { ClientFacade } from './ClientFacade';
 import { Round } from '../game-core/Round';
-import { BlockColor } from '../game-core/BlockColor';
 import { Planet } from '../game-core/Planet';
 
 var TARGET_FPS = 50;

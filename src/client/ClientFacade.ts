@@ -1,7 +1,7 @@
 import {Board} from '../game-core/Board';
-import {Block} from '../game-core/Block';
+import {Block} from '../game-core/block/Block';
 import {Rectangle} from '../game-core/Rectangle';
-import {BlockColor, BlockColorUtil} from '../game-core/BlockColor';
+import {BlockColor, BlockColorUtil} from '../game-core/block/BlockColor';
 import { BlockSprite } from './BlockSprite';
 import { interaction } from 'pixi.js';
 
