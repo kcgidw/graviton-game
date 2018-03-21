@@ -2,7 +2,7 @@ import {Block, IMatchInfo} from './block/Block';
 import {BlockColor, COLORS} from './block/BlockColor';
 import {ClientFacade} from '../client/ClientFacade';
 import {Rectangle} from './Rectangle';
-import { YHitbox } from './block/YHitbox';
+import {BlockPhysics} from './block/BlockPhysics';
 import { Round } from './Round';
 import { Planet } from './Planet';
 import { rand, randInt } from '../util';
@@ -23,7 +23,7 @@ export class Board {
 	numColumns: number;
 	colors: BlockColor[] = [];
 
-	ground: YHitbox;
+	ground: BlockPhysics;
 	blocks: Block[][] = [];
 	blocksMap: any = {};		// maps id to block
 
@@ -55,7 +55,8 @@ export class Board {
 		}
 		this.facade = facade;
 
-		this.ground = new YHitbox(this.dimensions.getBottom(), Block.HEIGHT);
+		this.ground = new BlockPhysics(this.dimensions.getBottom(), Block.HEIGHT);
+		this.ground.velocity = 0;
 
 		this.spawner = new Timer(this, () => {
 			var res = this.spawnBlockRandom();
@@ -91,14 +92,14 @@ export class Board {
 	}
 	getBlockDirectBelow(block: Block): Block {
 		var res = this.getBlockBelow(block);
-		if(res && res.hitbox.top === block.hitbox.getBottom()) {
+		if(res && res.physics.topY === block.physics.getBottom()) {
 			return res;
 		}
 		return undefined;
 	}
 	getBlockDirectAbove(block: Block): Block {
 		var res = this.getBlockAbove(block);
-		if(res && res.hitbox.getBottom() === block.hitbox.top) {
+		if(res && res.physics.getBottom() === block.physics.topY) {
 			return res;
 		}
 		return undefined;
@@ -113,74 +114,78 @@ export class Board {
 			this.spawner.step();
 		}
 
-		this.forEachBlock((block, colIdx, slotIdx) => {
-			block.contactBelowPrev = block.contactBelow;
-
-			// block physics
-
-			block.hitbox.top = block.hitbox.top + (block.velocity * this.engine.BASE_LOGICAL_FPS / this.engine.fps);
-			block.forces.gravity += this.planet.physics.gravity;
-			var accel: number = block.forces.gravity + block.forces.thrust;
-			block.velocity += accel;
-
-			if(block.forces.thrust < 0) {
-				// block.forces.thrust += this.planet.physics.thrustAccel;
-			}
-			if(block.forces.thrustTimer !== undefined) {
-				block.forces.thrustTimer.step();
-			}
-
-			var hitboxBelow: YHitbox;
-			var velBelow: number;
-			if(slotIdx === 0) {
-				hitboxBelow = this.ground;
-				velBelow = 0;
-			} else {
-				var blkBelow = this.blocks[block.columnIdx][slotIdx - 1];
-				hitboxBelow = blkBelow.hitbox;
-				velBelow = blkBelow.velocity;
-			}
-			if(block.hitbox.collidesBelow(hitboxBelow)) {
-				block.hitbox.moveToContact(hitboxBelow);
-				block.contactBelow = true;
-				block.forces.gravity = 0;
-				block.velocity = velBelow;
-				if(block.selectable === false) {
-					block.activateSelectable();
-				}
-				if(block.contactBelowPrev === false) {
-					this.isDirtyForMatches = true;
-				}
-			} else if (! this.getBlockDirectBelow(block)) {
-				block.contactBelow = false;
-			}
-		});
-
-		this.processExitedBlocks();	// TODO
-
 		if(this.isDirtyForMatches) {
 			this.compoundMatches = this.processMatches();
 			/* ignitions */
 			if(this.compoundMatches) {
 				this.compoundMatches.forEach((comp) => {
-					comp.blocks.forEach((blk)=>{
+					for(let blk of comp.blocks) {
 						blk.setType(BlockType.ROCKET);
-					});
+					}
 					var bottomBlks: Block[] = comp.getBottomBlocks();
-					bottomBlks.forEach((blk) => {
-						blk.forces.gravity = 0;
-						blk.forces.thrust = this.planet.physics.thrustIV;
-						blk.velocity = this.planet.physics.thrustIV;
-						blk.forces.thrustTimer = new Timer(this, () => {
-							blk.forces.thrust = 0;
+					for(let blk of bottomBlks) {
+						let physics = blk.physics;
+						physics.forces.gravity = 0;
+						physics.forces.thrust = this.planet.physics.thrustIV;
+						physics.velocity = this.planet.physics.thrustIV;
+						physics.forces.thrustTimer = new Timer(this, () => {
+							// friendly reminder:
+							// as long as this function is here, make sure physics is a LET, not a VAR
+							physics.forces.thrust = 0;
 						}, this.planet.physics.thrustDur, false).start();
-						console.log(blk);
-					});
-					console.log(bottomBlks);
+					}
 				});
 			}
 			this.isDirtyForMatches = false;
 		}
+		this.forEachBlock((block, colIdx, slotIdx) => {
+			block.physics.contactBelowPrev = block.physics.contactBelow;
+
+			// block physics
+
+			block.physics.forces.gravity += this.planet.physics.gravity;
+			var accel: number = block.physics.forces.gravity + block.physics.forces.thrust;
+			block.physics.velocity += accel;
+			block.physics.topY = block.physics.topY + (block.physics.velocity * this.engine.BASE_LOGICAL_FPS / this.engine.fps);
+
+			if(block.physics.forces.thrust < 0) {
+				// block.forces.thrust += this.planet.physics.thrustAccel;
+			}
+			if(block.physics.forces.thrustTimer !== undefined) {
+				block.physics.forces.thrustTimer.step();
+			}
+
+			var hitboxBelow: BlockPhysics;
+			var velBelow: number;
+			var gravBelow: number;
+			if(slotIdx === 0) {
+				hitboxBelow = this.ground;
+				velBelow = 0;
+				gravBelow = 0;
+			} else {
+				var blkBelow = this.blocks[block.columnIdx][slotIdx - 1];
+				hitboxBelow = blkBelow.physics;
+				velBelow = blkBelow.physics.velocity;
+				gravBelow = blkBelow.physics.forces.gravity;
+			}
+			if(block.physics.collidesBelow(hitboxBelow)) {
+				block.physics.moveToContact(hitboxBelow);
+				block.physics.contactBelow = true;
+				block.physics.forces.gravity = gravBelow;
+				block.physics.velocity = velBelow;
+				if(block.selectable === false) {
+					block.activateSelectable();
+				}
+				if(block.physics.contactBelowPrev === false) {
+					this.isDirtyForMatches = true;
+				}
+			} else if (! this.getBlockDirectBelow(block)) {
+				block.physics.contactBelow = false;
+			}
+		});
+
+		this.processEscapedBlocks();	// TODO
+
 
 		this.tick++;
 	}
@@ -289,7 +294,7 @@ export class Board {
 		return true;		// no potential matches found
 	}
 
-	processExitedBlocks() {
+	processEscapedBlocks() {
 
 	}
 
@@ -307,19 +312,28 @@ export class Board {
 
 		var col = a.columnIdx;
 		var tmpA: Block = a;
-		var tmpAStackIdx: number = a.slotIdx;
-		var tmpAHitboxTop: number = a.hitbox.top;
+		var tmpASlotIdx: number = a.slotIdx;
+		var tmpAHitboxTop: number = a.physics.topY;
+		// var tmpAType: BlockType = a.type;
+		// var tmpAColor: BlockColor = a.color;
+		var tmpAPhysics = a.physics;
+		var tmpAVel = a.physics.velocity;
+		var tmpBVel = b.physics.velocity;
 
 		this.blocks[col][a.slotIdx] = b;
 		this.blocks[col][b.slotIdx] = tmpA;
 
 		a.slotIdx = b.slotIdx;
-		b.slotIdx = tmpAStackIdx;
+		b.slotIdx = tmpASlotIdx;
 
-		a.hitbox.top = b.hitbox.top;
-		b.hitbox.top = tmpAHitboxTop;
+		a.physics = b.physics;
+		a.physics.velocity = tmpAVel;
+		b.physics = tmpAPhysics;
+		b.physics.velocity = tmpBVel;
 
 		this.isDirtyForMatches = true;
+		console.log(a);
+		console.log(b);
 	}
 	swapUp(block: Block): void {
 		var other: Block =  this.getBlockDirectAbove(block);
@@ -366,13 +380,13 @@ export class Board {
 						}
 						// if is a valid simple match, then attach info to each of its blocks
 						if(match.blocks.length >= 3) {
-							match.blocks.forEach((blk) => {
+							for(let blk of match.blocks) {
 								blk.matchInfo = blk.matchInfo ? blk.matchInfo : {};
 								blk.matchInfo.hor = match;
 								if(allMatchBlocks.indexOf(blk) === -1) {
 									allMatchBlocks.push(blk);
 								}
-							});
+							}
 						}
 					}
 	
@@ -387,13 +401,13 @@ export class Board {
 							}
 						}
 						if(match.blocks.length >= 3) {
-							match.blocks.forEach((blk) => {
+							for(let blk of match.blocks) {
 								blk.matchInfo = blk.matchInfo ? blk.matchInfo : {};
 								blk.matchInfo.ver = match;
 								if(allMatchBlocks.indexOf(blk) === -1) {
 									allMatchBlocks.push(blk);
 								}
-							});
+							}
 						}
 					}
 				}
@@ -405,7 +419,7 @@ export class Board {
 		If a simple match intersects with another simple match, attach the other into the compound.
 		If the other is also a part of a compound, merge the two compounds.
 		*/
-		allMatchBlocks.forEach((refBlk) => {
+		for(let refBlk of allMatchBlocks) {
 			let refMatch: IMatchInfo = refBlk.matchInfo;
 
 			if(refMatch !== undefined) {	// then blk is part of at least 1 match
@@ -416,20 +430,20 @@ export class Board {
 					if(refMatch[simp] !== undefined) {
 						let simple = refMatch[simp];
 						refMatch.compound.attachSimpleMatch(simple);
-						simple.blocks.forEach((simpleMember) => {
+						for(let simpleMember of simple.blocks) {
 							let toAbsorb: CompoundMatch = simpleMember.matchInfo.compound;
 							if(toAbsorb !== undefined && toAbsorb !== refMatch.compound) {
 								refMatch.compound.absorbCompoundMatch(toAbsorb);
 							}
 							simpleMember.matchInfo.compound = refMatch.compound;
-						});
+						}
 					}
 				});
 			}
-		});
+		}
 
 		var compounds: CompoundMatch[] = [];
-		allMatchBlocks.forEach((blk)=>{
+		for(let blk of allMatchBlocks) {
 			// if the selected block is in a match, deselect it
 			if(this.facade && this.facade.selectedBlock && blk === this.facade.selectedBlock.block) {
 				this.facade.selectBlock(undefined);
@@ -439,8 +453,9 @@ export class Board {
 			if(compounds.indexOf(comp) === -1) {
 				compounds.push(comp);
 			}
-		});
-		if(compounds.length > 0) {		// any matches this step
+		}
+
+		if(compounds.length > 0) {		// any matches this step?
 			console.log(compounds);
 		}
 		return compounds;

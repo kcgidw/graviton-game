@@ -56,9 +56,9 @@ export class ClientFacade {
 			if(this.selectedBlock) {
 				var pointerCoordinates: PIXI.Point = eventData.data.getLocalPosition(this.boardContainer);
 				var pointerY: number = pointerCoordinates.y;
-				if(pointerY < this.selectedBlock.block.hitbox.top) {
+				if(pointerY < this.selectedBlock.block.physics.topY) {
 					this.board.swapUp(this.selectedBlock.block);
-				} else if(pointerY > this.selectedBlock.block.hitbox.getBottom()) {
+				} else if(pointerY > this.selectedBlock.block.physics.getBottom()) {
 					this.board.swapDown(this.selectedBlock.block);
 				}
 			}
@@ -87,16 +87,16 @@ export class ClientFacade {
 	}
 
 	draw(): void {
-		this.board.blocks.forEach((column) => {
-			column.forEach((block) => {
-				let bs: BlockSprite = this.blockSprites.get(block);
+		for(let col of this.board.blocks) {
+			for(let blk of col) {
+				let bs: BlockSprite = this.blockSprites.get(blk);
 				if(!bs) {
-					bs = this.addBlock(block);
+					bs = this.addBlock(blk);
 				}
-				bs.updateSpritePosition(block.hitbox.top);
+				bs.updateSpritePosition(blk.physics.topY);
 				bs.updateTexture();
-			});
-		});
+			}
+		}
 	}
 
 	addBlock(block: Block): BlockSprite {

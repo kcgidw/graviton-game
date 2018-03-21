@@ -36,14 +36,14 @@ export class Planet {
 		this.inputDistrib = data.colors;
 
 		this.distribSum = 0;
-		Object.keys(this.inputDistrib).forEach((colorStr) => {
-			this.colors.push(BlockColorUtil.strToColor(colorStr));
+		for(let colorKey in this.inputDistrib) {
+			this.colors.push(BlockColorUtil.strToColor(colorKey));
 			this.distribArr.push({
-				color: BlockColorUtil.strToColor(colorStr),
-				colorStr: colorStr,
-				weight: this.inputDistrib[colorStr],
+				color: BlockColorUtil.strToColor(colorKey),
+				colorStr: colorKey,
+				weight: this.inputDistrib[colorKey],
 			});
-			this.distribSum += this.inputDistrib[colorStr];
-		});
+			this.distribSum += this.inputDistrib[colorKey];
+		}
 	}
 }

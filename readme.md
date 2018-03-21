@@ -1,12 +1,11 @@
-Meteos clone project
+A Meteos clone hobby project for web, tentatively named Graviton Galaxies
 
-Progress at: https://graviton-test.netlify.com/
+See progress at: https://graviton-test.netlify.com/
 
-Todo:
-* Physics
-* User controls
-* Sound
-* Graphics
+Stuff to work on:
+* Basic gameplay
+* Player controls and UX
 * Planets
 * Multiplayer
 * Server-side game logic
+* Sound/image assets

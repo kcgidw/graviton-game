@@ -1,10 +1,10 @@
 import { Board } from "./Board";
 
-enum TimerState {STOP, START, PAUSE}
+enum TimerState {NOT_STARTED, START, PAUSE, STOP}
 
 export class Timer {
-	state: TimerState = TimerState.STOP;
-	time: number = 0;
+	state: TimerState = TimerState.NOT_STARTED;
+	time: number;
 	alarm: number;
 	board: Board;
 	action: ()=>any;
@@ -19,13 +19,21 @@ export class Timer {
 
 	stop() {
 		this.state = TimerState.STOP;
-		this.time = 0;
+		this.time = undefined;
 		return this;
 	}
 	start() {
+		if(this.state === TimerState.START) {
+			throw new Error('timer already started');
+		}
 		this.state = TimerState.START;
+		this.time = 0;
 		return this;
 	}
+	// resume() {
+	// 	this.state = TimerState.START;
+	// 	return this;
+	// }
 	pause() {
 		this.state = TimerState.PAUSE;
 		return this;

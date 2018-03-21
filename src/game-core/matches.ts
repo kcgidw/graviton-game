@@ -23,31 +23,31 @@ export class CompoundMatch {
 	attachSimpleMatch(simpleMatch: SimpleMatch) {
 		if(this.simpleMatches.indexOf(simpleMatch) === -1) {
 			this.simpleMatches.push(simpleMatch);
-			simpleMatch.blocks.forEach((blk) => {
+			for(let blk of simpleMatch.blocks) {
 				if(this.blocks.indexOf(blk) === -1) {
 					this.blocks.push(blk);
 				}
-			});
+			}
 		}
 	}
 	absorbCompoundMatch(match: CompoundMatch) {
-		match.simpleMatches.forEach((sm: SimpleMatch) => {
+		for(let sm of match.simpleMatches) {
 			this.attachSimpleMatch(sm);
-		});
+		}
 	}
 	getColumnIdxs(): number[] {
 		var colIdxs: number[] = [];
-		this.blocks.forEach((blk) => {
+		for(let blk of this.blocks) {
 			var col: number = blk.columnIdx;
 			if(colIdxs.indexOf(col) === -1) {
 				colIdxs.push(col);
 			}
-		});
+		}
 		return colIdxs;
 	}
 	getBottomBlocks(): Block[] {
 		var bottoms = {};
-		this.blocks.forEach((blk) => {
+		for(let blk of this.blocks) {
 			var col = blk.columnIdx;
 			var slot = blk.slotIdx;
 			if(bottoms[col] === undefined) {
@@ -58,7 +58,7 @@ export class CompoundMatch {
 					bottoms[col] = blk;
 				}
 			}
-		});
+		}
 		return Object.keys(bottoms).map((k) => bottoms[k]);
 	}
 }
