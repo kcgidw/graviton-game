@@ -8,18 +8,25 @@ interface IDistribArrItem {
 	weight: number;
 }
 export interface IPlanetPhysics {
-	blockMass: number;
-	garbageMass: number;
+	// blockMass: number;
+	// garbageMass: number;
 
 	fallIV: number;
 	gravity: number;
+	maxGravity: number;
 
+	// Note: Many thrust values are negative
 	thrustIV: number;
-	thrustDur: number;
 	thrustAccel: number;
-	descentCap: number;		// min rocket descent (falling)
+	maxThrust: number;
+	thrustDur: number;
+	minThrust: number;		// descent
 }
-
+export interface IPlanetConfig {
+	columns: number;
+	physics: IPlanetPhysics;
+	distribution: any;
+}
 export class Planet {
 	numColumns: number;
 
@@ -30,10 +37,10 @@ export class Planet {
 	colors: BlockColor[] = [];
 	distribSum: number;
 
-	constructor(data: any) {
+	constructor(data: IPlanetConfig) {
 		this.numColumns = data.columns;
 		this.physics = data.physics;
-		this.inputDistrib = data.colors;
+		this.inputDistrib = data.distribution;
 
 		this.distribSum = 0;
 		for(let colorKey in this.inputDistrib) {

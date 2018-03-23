@@ -129,8 +129,7 @@ export class Board {
 						physics.forces.thrust = this.planet.physics.thrustIV;
 						physics.velocity = this.planet.physics.thrustIV;
 						physics.forces.thrustTimer = new Timer(this, () => {
-							// friendly reminder:
-							// as long as this function is here, make sure physics is a LET, not a VAR
+							// friendly reminder: as long as this function is here, make sure physics is a LET, not a VAR
 							physics.forces.thrust = 0;
 						}, this.planet.physics.thrustDur, false).start();
 					}

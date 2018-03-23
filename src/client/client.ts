@@ -1,7 +1,8 @@
-import { Board } from '../game-core/Board';	// TODO webpack to es5
+import { Board } from '../game-core/Board';
 import { ClientFacade } from './ClientFacade';
 import { Round } from '../game-core/Round';
 import { Planet } from '../game-core/Planet';
+import { PLANET_MAP } from '../game-core/PlanetMap';
 
 var TARGET_FPS = 50;
 var ENABLE_CATCHUP: boolean = false;
@@ -80,22 +81,7 @@ function mainStep() {
 }
 
 function beginRound() {
-	board = game.createBoard(new Planet({
-		columns: 9,
-		physics: {
-			gravity: 0.04,
-			thrustIV: -2,
-			thrustAccel: -0.1,
-			thrustDur: 0.2 * 1000
-		},
-		colors: {
-			YELLOW: 28,
-			RED: 25,
-			PURPLE: 25,
-			PINK: 12,
-			MINT: 10,
-		},
-	}));
+	board = game.createBoard(new Planet(PLANET_MAP.get('test')));
 	// board.debugMaxBlocks = 100;
 	facade = new ClientFacade(board, app);
 	board.setFacade(facade);

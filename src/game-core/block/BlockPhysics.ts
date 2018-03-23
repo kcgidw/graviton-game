@@ -34,7 +34,7 @@ export class BlockPhysics {
 		if(this.getBottom() >= other.topY - 1) {
 			return true;
 		}
-		// does NOT check if this is completely under 'other'
+		// does NOT check if this is completely below 'other'. For now, that should be impossible.
 		return false;
 	}
 
