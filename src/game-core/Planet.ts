@@ -20,10 +20,14 @@ export interface IPlanetPhysics {
 	thrustAccel: number;
 	maxThrust: number;
 	thrustDur: number;
-	minThrust: number;		// descent
+	// minThrust: number;		// descent
+}
+interface ISpawnerConfig {
+	startInterval: number;
 }
 export interface IPlanetConfig {
 	columns: number;
+	spawner: ISpawnerConfig;
 	physics: IPlanetPhysics;
 	distribution: any;
 }
@@ -31,6 +35,7 @@ export class Planet {
 	numColumns: number;
 
 	physics: IPlanetPhysics;
+	spawner: ISpawnerConfig;
 
 	inputDistrib: any;
 	distribArr: IDistribArrItem[] = [];
@@ -39,6 +44,7 @@ export class Planet {
 
 	constructor(data: IPlanetConfig) {
 		this.numColumns = data.columns;
+		this.spawner = data.spawner;
 		this.physics = data.physics;
 		this.inputDistrib = data.distribution;
 

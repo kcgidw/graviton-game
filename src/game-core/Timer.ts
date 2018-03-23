@@ -1,6 +1,6 @@
 import { Board } from "./Board";
 
-enum TimerState {NOT_STARTED, START, PAUSE, STOP}
+export enum TimerState {NOT_STARTED, START, PAUSE, END}
 
 export class Timer {
 	state: TimerState = TimerState.NOT_STARTED;
@@ -17,28 +17,6 @@ export class Timer {
 		this.repeats = repeats;
 	}
 
-	stop() {
-		this.state = TimerState.STOP;
-		this.time = undefined;
-		return this;
-	}
-	start() {
-		if(this.state === TimerState.START) {
-			throw new Error('timer already started');
-		}
-		this.state = TimerState.START;
-		this.time = 0;
-		return this;
-	}
-	// resume() {
-	// 	this.state = TimerState.START;
-	// 	return this;
-	// }
-	pause() {
-		this.state = TimerState.PAUSE;
-		return this;
-	}
-
 	step() {
 		if(this.state === TimerState.START) {
 			this.time += this.board.engine.stepInterval;
@@ -53,10 +31,30 @@ export class Timer {
 			} else {
 				if(this.time > this.alarm) {
 					this.alert();
-					this.stop();
+					this.kill();
 				}
 			}
 		}
+	}
+
+	start() {
+		if(this.state === TimerState.START) {
+			throw new Error('timer already started');
+		}
+		this.state = TimerState.START;
+		this.time = 0;
+		return this;
+	}
+	// resume() {
+	// }
+	pause() {
+		this.state = TimerState.PAUSE;
+		return this;
+	}
+	kill() {
+		this.state = TimerState.END;
+		this.time = undefined;
+		return this;
 	}
 
 	alert() {

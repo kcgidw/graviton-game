@@ -6,7 +6,7 @@ import {BlockPhysics} from './block/BlockPhysics';
 import { Round } from './Round';
 import { Planet } from './Planet';
 import { rand, randInt } from '../util';
-import { Timer } from './Timer';
+import { Timer, TimerState } from './Timer';
 import { CompoundMatch, SimpleMatch } from './matches';
 import { BlockType } from './block/BlockType';
 
@@ -27,7 +27,7 @@ export class Board {
 	blocks: Block[][] = [];
 	blocksMap: any = {};		// maps id to block
 
-	spawnInterval: number = 0.3 * 1000;
+	spawnInterval: number;
 	spawner: Timer;
 
 	facade: ClientFacade;
@@ -55,15 +55,15 @@ export class Board {
 		}
 		this.facade = facade;
 
-		this.ground = new BlockPhysics(this.dimensions.getBottom(), Block.HEIGHT);
-		this.ground.velocity = 0;
+		this.ground = new BlockPhysics(this.dimensions.getBottom(), Block.HEIGHT, 0);
+		// this.ground.velocity = 0;
 
 		this.spawner = new Timer(this, () => {
 			var res = this.spawnBlockRandom();
 			if(!res) {
-				this.spawner.stop();
+				this.spawner.kill();
 			}
-		}, this.spawnInterval, true).start();
+		}, this.planet.spawner.startInterval, true).start();
 
 		console.log(this);
 	}
@@ -109,7 +109,7 @@ export class Board {
 		this.time += this.engine.stepInterval;
 
 		if(this.debugMaxBlocks && this.blockId > this.debugMaxBlocks) {
-			this.spawner.stop();
+			this.spawner.kill();
 		} else {
 			this.spawner.step();
 		}
@@ -127,32 +127,39 @@ export class Board {
 						let physics = blk.physics;
 						physics.forces.gravity = 0;
 						physics.forces.thrust = this.planet.physics.thrustIV;
-						physics.velocity = this.planet.physics.thrustIV;
-						physics.forces.thrustTimer = new Timer(this, () => {
-							// friendly reminder: as long as this function is here, make sure physics is a LET, not a VAR
-							physics.forces.thrust = 0;
-						}, this.planet.physics.thrustDur, false).start();
+						// physics.velocity = this.planet.physics.thrustIV;
+						physics.forces.thrustAccelTimer = new Timer(this, () => {}, this.planet.physics.thrustDur, false)
+							.start();
 					}
 				});
 			}
 			this.isDirtyForMatches = false;
 		}
+
+		/* block physics */
 		this.forEachBlock((block, colIdx, slotIdx) => {
-			block.physics.contactBelowPrev = block.physics.contactBelow;
+			var bp = block.physics;
+			var pp = this.planet.physics;
+			bp.contactBelowPrev = bp.contactBelow;
 
-			// block physics
-
-			block.physics.forces.gravity += this.planet.physics.gravity;
-			var accel: number = block.physics.forces.gravity + block.physics.forces.thrust;
-			block.physics.velocity += accel;
-			block.physics.topY = block.physics.topY + (block.physics.velocity * this.engine.BASE_LOGICAL_FPS / this.engine.fps);
-
-			if(block.physics.forces.thrust < 0) {
-				// block.forces.thrust += this.planet.physics.thrustAccel;
+			bp.forces.gravity += pp.gravity;
+			if(bp.forces.gravity > pp.maxGravity) {
+				bp.forces.gravity = pp.maxGravity;
 			}
-			if(block.physics.forces.thrustTimer !== undefined) {
-				block.physics.forces.thrustTimer.step();
+
+			if(bp.forces.thrustAccelTimer !== undefined) {
+				bp.forces.thrustAccelTimer.step();
+				if(bp.forces.thrustAccelTimer.state === TimerState.START) {
+					bp.forces.thrust += pp.thrustAccel;
+					if(bp.forces.thrust < pp.maxThrust) {
+						bp.forces.thrust = pp.maxThrust;
+					}
+				}
 			}
+
+			var velocity = bp.forces.gravity + bp.forces.thrust;
+			bp.topY += velocity * this.engine.BASE_LOGICAL_FPS / this.engine.fps;
+
 
 			var hitboxBelow: BlockPhysics;
 			var velBelow: number;
@@ -164,22 +171,26 @@ export class Board {
 			} else {
 				var blkBelow = this.blocks[block.columnIdx][slotIdx - 1];
 				hitboxBelow = blkBelow.physics;
-				velBelow = blkBelow.physics.velocity;
+				// velBelow = blkBelow.physics.velocity;
 				gravBelow = blkBelow.physics.forces.gravity;
 			}
-			if(block.physics.collidesBelow(hitboxBelow)) {
-				block.physics.moveToContact(hitboxBelow);
-				block.physics.contactBelow = true;
-				block.physics.forces.gravity = gravBelow;
-				block.physics.velocity = velBelow;
+			if(bp.collidesBelow(hitboxBelow)) {
+				bp.moveToContact(hitboxBelow);
+				bp.contactBelow = true;
+				bp.forces.gravity = gravBelow;
+				bp.forces.thrust = 0;
+				if(bp.forces.thrustAccelTimer) {
+					bp.forces.thrustAccelTimer.kill();
+				}
+				// bp.velocity = velBelow;
 				if(block.selectable === false) {
 					block.activateSelectable();
 				}
-				if(block.physics.contactBelowPrev === false) {
+				if(bp.contactBelowPrev === false) {
 					this.isDirtyForMatches = true;
 				}
 			} else if (! this.getBlockDirectBelow(block)) {
-				block.physics.contactBelow = false;
+				bp.contactBelow = false;
 			}
 		});
 
@@ -216,7 +227,7 @@ export class Board {
 	spawnBlock(colIdx: number, color: BlockColor): Block {
 		var col: Block[] = this.blocks[colIdx];
 		var slotIdx = col.length;
-		var block: Block = new Block(colIdx, slotIdx, BlockType.NORMAL, this.blockId++)
+		var block: Block = new Block(colIdx, slotIdx, BlockType.NORMAL, this.blockId++, this.planet.physics.fallIV)
 			.setColor(color);
 		col.push(block);
 		this.blocksMap[block.id] = block;
@@ -316,8 +327,8 @@ export class Board {
 		// var tmpAType: BlockType = a.type;
 		// var tmpAColor: BlockColor = a.color;
 		var tmpAPhysics = a.physics;
-		var tmpAVel = a.physics.velocity;
-		var tmpBVel = b.physics.velocity;
+		// var tmpAVel = a.physics.velocity;
+		// var tmpBVel = b.physics.velocity;
 
 		this.blocks[col][a.slotIdx] = b;
 		this.blocks[col][b.slotIdx] = tmpA;
@@ -326,9 +337,9 @@ export class Board {
 		b.slotIdx = tmpASlotIdx;
 
 		a.physics = b.physics;
-		a.physics.velocity = tmpAVel;
+		// a.physics.velocity = tmpAVel;
 		b.physics = tmpAPhysics;
-		b.physics.velocity = tmpBVel;
+		// b.physics.velocity = tmpBVel;
 
 		this.isDirtyForMatches = true;
 		console.log(a);

@@ -7,8 +7,7 @@ Not totally coupled to blocks, i.e. when we swap two blocks, we usually want the
 export class BlockPhysics {
 	topY: number;
 	height: number;
-
-	velocity: number;
+	prevY: number;
 
 	contactBelow: boolean = false;	// is touching a solid directly below
 	contactBelowPrev: boolean = false;	// contactBelow for previous frame
@@ -16,13 +15,14 @@ export class BlockPhysics {
 	forces: IForceInfo = {
 		gravity: 0,
 		thrust: 0,
-		thrustTimer: undefined,
+		thrustAccelTimer: undefined,
 	};
 
-	constructor(top: number, height: number) {
+	constructor(top: number, height: number, iv: number) {
 		this.topY = top;
+		this.prevY = top;
 		this.height = height;
-		this.velocity = 20;
+		this.forces.gravity = iv;
 	}
 
 	getBottom() {
@@ -59,19 +59,19 @@ export class BlockPhysics {
 		return undefined;
 	}
 
-	isRising(): boolean {
-		return this.velocity > 0;
-	}
+	// isRising(): boolean {
+	// 	return this.velocity > 0;
+	// }
 	isFalling(): boolean {
-		return this.velocity < 0;
+		return this.prevY > this.topY;
 	}
-	isStationary(): boolean {
-		return this.velocity === 0;
-	}
+	// isStationary(): boolean {
+	// 	return this.velocity === 0;
+	// }
 }
 
 export interface IForceInfo {
 	gravity: number;
 	thrust: number;
-	thrustTimer: Timer;
+	thrustAccelTimer: Timer;
 }

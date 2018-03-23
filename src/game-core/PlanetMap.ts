@@ -4,16 +4,18 @@ export const PLANET_MAP: Map<string, IPlanetConfig> = new Map([
     ['test',
         {
             columns: 9,
+            spawner: {
+                startInterval: 0.2 * 1000,
+            },
             physics: {
-                fallIV: 20,
-                gravity: 0.05,
-                maxGravity: 50,
+                fallIV: 10,
+                gravity: 1,
+                maxGravity: 30,
 
-                thrustIV: -2,
-                thrustAccel: -0.1,
-                maxThrust: -50,
-                thrustDur: 0.2 * 1000,
-                minThrust: -40
+                thrustIV: -0,
+                thrustAccel: -3,
+                maxThrust: -29,
+                thrustDur: 1 * 1000,
             },
             distribution: {
                 YELLOW: 28,

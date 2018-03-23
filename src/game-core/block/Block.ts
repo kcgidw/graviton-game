@@ -22,10 +22,10 @@ export class Block {
 
 	matchInfo: IMatchInfo;
 
-	constructor(columnIdx: number, slotIdx: number, type: BlockType, id: number) {
+	constructor(columnIdx: number, slotIdx: number, type: BlockType, id: number, iv: number) {
 		this.columnIdx = columnIdx;
 		this.slotIdx = slotIdx;
-		this.physics = new BlockPhysics(Block.SPAWN_POSITION, Block.HEIGHT);
+		this.physics = new BlockPhysics(Block.SPAWN_POSITION, Block.HEIGHT, iv);
 		this.id = id;
 		this.type = type;
 	}
