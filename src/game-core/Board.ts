@@ -9,9 +9,10 @@ import { rand, randInt } from '../util';
 import { Timer, TimerState } from './Timer';
 import { CompoundMatch, SimpleMatch } from './matches';
 import { BlockType } from './block/BlockType';
+import { SlotCluster } from './SlotCluster';
 
 /* TODO
-- Load a cache of block objects?
+- Consider object pooling https://www.html5rocks.com/en/tutorials/speed/static-mem-pools/
 */
 
 export class Board {
@@ -33,6 +34,7 @@ export class Board {
 	facade: ClientFacade;
 
 	blockId: number = 0;
+	clusterId: number = 0;
 
 	tick: number = 0;
 	time: number = 0;
@@ -69,11 +71,11 @@ export class Board {
 	}
 
 	forEachBlock(fn: (block: Block, colIdx?: number, slotIdx?: number)=>any) {
-		this.blocks.forEach((col, colIdx) => {
-			col.forEach((block, slotIdx) => {	// forEach iterates in asc order
-				fn(block, colIdx, slotIdx);
-			});
-		});
+		for(let c=0; c<this.blocks.length; c++) {
+			for(let s=0; s<this.blocks[c].length; s++) {
+				fn(this.blocks[c][s], c, s);
+			}
+		}
 	}
 	getBlock(blockId: number): Block {
 		return this.blocksMap[blockId];
@@ -123,6 +125,7 @@ export class Board {
 						blk.setType(BlockType.ROCKET);
 					}
 					var bottomBlks: Block[] = comp.getBottomBlocks();
+					var cluster = new SlotCluster(this, this.clusterId++, bottomBlks);
 					for(let blk of bottomBlks) {
 						let physics = blk.physics;
 						physics.forces.gravity = 0;

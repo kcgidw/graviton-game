@@ -8,7 +8,7 @@ export class BlockSprite {
 	block: Block;
 	sprite: PIXI.Sprite;
 	board: Board;
-	debugId: PIXI.Text;
+	text: PIXI.Text;
 
 	constructor(board: Board, block: Block, sprite: PIXI.Sprite) {
 		this.board = board;
@@ -22,19 +22,19 @@ export class BlockSprite {
 		});
 
 		// debug text
-		this.debugId = new PIXI.Text(block.id + '', {fill: '#ffffff'});
-		var colText = new PIXI.Text('col '+block.columnIdx, {fill: '#ffffff'});
-		this.debugId.addChild(colText);
-		colText.y += 20;
-		var slotText = new PIXI.Text('stk '+block.slotIdx, {fill: '#ffffff'});
-		this.debugId.addChild(slotText);
-		slotText.y += 40;
-
+		this.updateDebugText();
 		// (<any>this.sprite).__BLOCK = block;
+	}
+	updateDebugText() {
+		if(!this.text) this.text = new PIXI.Text('', {fill: '#ffffff', lineHeight: 16});
+		this.text.text = `${this.block.id}\n
+		c${this.block.columnIdx}.s${this.block.slotIdx}\n
+		${this.block.physics.cluster === undefined ? 'u' : this.block.physics.cluster.id}`;
 	}
 	updateSpritePosition(y: number) {
 		this.sprite.y = y;
-		this.sprite.addChild(this.debugId);
+		this.sprite.addChild(this.text);
+		this.updateDebugText();
 	}
 	updateTexture() {
 		var type: BlockType = this.block.type;

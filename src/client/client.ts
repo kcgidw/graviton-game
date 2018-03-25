@@ -5,7 +5,7 @@ import { Planet } from '../game-core/Planet';
 import { PLANET_MAP } from '../game-core/PlanetMap';
 
 var TARGET_FPS = 50;
-var ENABLE_CATCHUP: boolean = false;
+var ENABLE_CATCHUP: boolean = true;
 var MAX_CATCHUP_TIME = 3 * 1000;
 
 var gameStepInterval: number = 1000 / TARGET_FPS;

@@ -1,8 +1,10 @@
 import { Block } from "./Block";
 import { Timer } from "../Timer";
+import { SlotCluster } from "../SlotCluster";
 
 /* Position, physics, and collision line
-Not totally coupled to blocks, i.e. when we swap two blocks, we usually want the block slots to NOT swap
+AKA "Slots," not entirely coupled to blocks.
+Think of it as the wireframe of a block's position.
 */
 export class BlockPhysics {
 	topY: number;
@@ -17,6 +19,8 @@ export class BlockPhysics {
 		thrust: 0,
 		thrustAccelTimer: undefined,
 	};
+
+	cluster: SlotCluster;
 
 	constructor(top: number, height: number, iv: number) {
 		this.topY = top;
