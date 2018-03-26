@@ -81,7 +81,6 @@ export class Board {
 		return this.blocksMap[blockId];
 	}
 	getBlockAbove(block: Block): Block {
-		if(typeof block === 'number') {block = this.getBlock(block);}
 		let colIdx = block.columnIdx;
 		let slotIdx = block.slotIdx;
 		return this.blocks[colIdx][slotIdx + 1];
@@ -118,23 +117,37 @@ export class Board {
 
 		if(this.isDirtyForMatches) {
 			this.compoundMatches = this.processMatches();
-			/* ignitions */
 			if(this.compoundMatches) {
-				this.compoundMatches.forEach((comp) => {
+				/* ignitions */
+				for(let comp of this.compoundMatches) {
 					for(let blk of comp.blocks) {
 						blk.setType(BlockType.ROCKET);
 					}
-					var bottomBlks: Block[] = comp.getBottomBlocks();
-					var cluster = new SlotCluster(this, this.clusterId++, bottomBlks);
-					for(let blk of bottomBlks) {
+
+					let matchBottomBlks: Block[] = comp.getBottomBlocks();
+
+					// Whenever a cluster gets reignited, replace the cluster entirely.
+					// This more easily accomodates for chain-jumps.
+					let newCluster = new SlotCluster(this, this.clusterId++, []);
+
+					for(let blk of matchBottomBlks) {
+						let physics = blk.physics;
+						if(physics.cluster !== undefined && physics.cluster !== newCluster) {
+							newCluster.absorbCluster(physics.cluster);
+						} else {
+							newCluster.addBlockAndUp(blk);
+						}
+					}
+					
+					for(let blk of newCluster.getBottomBlocks()) {
 						let physics = blk.physics;
 						physics.forces.gravity = 0;
 						physics.forces.thrust = this.planet.physics.thrustIV;
 						// physics.velocity = this.planet.physics.thrustIV;
 						physics.forces.thrustAccelTimer = new Timer(this, () => {}, this.planet.physics.thrustDur, false)
-							.start();
+						.start();
 					}
-				});
+				}
 			}
 			this.isDirtyForMatches = false;
 		}
@@ -161,18 +174,17 @@ export class Board {
 			}
 
 			var velocity = bp.forces.gravity + bp.forces.thrust;
+			bp.prevY = bp.topY;
 			bp.topY += velocity * this.engine.BASE_LOGICAL_FPS / this.engine.fps;
 
 
 			var hitboxBelow: BlockPhysics;
-			var velBelow: number;
 			var gravBelow: number;
 			if(slotIdx === 0) {
 				hitboxBelow = this.ground;
-				velBelow = 0;
 				gravBelow = 0;
 			} else {
-				var blkBelow = this.blocks[block.columnIdx][slotIdx - 1];
+				let blkBelow = this.blocks[block.columnIdx][slotIdx - 1];
 				hitboxBelow = blkBelow.physics;
 				// velBelow = blkBelow.physics.velocity;
 				gravBelow = blkBelow.physics.forces.gravity;
@@ -191,6 +203,9 @@ export class Board {
 				}
 				if(bp.contactBelowPrev === false) {
 					this.isDirtyForMatches = true;
+				}
+				if(hitboxBelow.cluster !== undefined) {
+					hitboxBelow.cluster.addOne(block);
 				}
 			} else if (! this.getBlockDirectBelow(block)) {
 				bp.contactBelow = false;
@@ -375,7 +390,7 @@ export class Board {
 
 		var allMatchBlocks: Block[] = [];
 
-		/* Generate simple matches */
+		/* Find and declare simple matches */
 		for(let colIdx=0; colIdx<this.numColumns; colIdx++) {
 			for(let slotIdx=0; slotIdx<this.blocks[colIdx].length; slotIdx++) {
 				let refBlk: Block = this.blocks[colIdx][slotIdx];

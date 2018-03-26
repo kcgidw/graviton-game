@@ -12,20 +12,26 @@ export class SlotCluster {
 		this.blocks = new Map();
 
 		for(let blk of bottomBlks) {
-			let curBlk: Block = blk;
-			while(curBlk !== undefined) {
-				this.add(curBlk);
-				curBlk = this.board.getBlockDirectAbove(curBlk);
-			}
+			this.addBlockAndUp(blk);
 		}
 	}
 
-	add(blk: Block) {
+	addBlockAndUp(baseBlock: Block) {
+		var curBlk: Block = baseBlock;
+		while(curBlk !== undefined) {
+			this.addOne(curBlk);
+			curBlk = this.board.getBlockDirectAbove(curBlk);
+		}
+	}
+	addOne(blk: Block) {
 		var coli = blk.columnIdx;
 		if(this.blocks.get(coli) === undefined) {
+			// register this column
 			this.blocks.set(coli, new ClusterColumn());
 		}
-		this.blocks.get(coli).add(blk);
+		if(this.blocks.get(coli).has(blk) === false) {
+			this.blocks.get(coli).add(blk);
+		}
 
 		blk.physics.cluster = this;
 	}
@@ -38,10 +44,17 @@ export class SlotCluster {
 	absorbCluster(clus: SlotCluster): SlotCluster {
 		for(let [colIdx, col] of clus.blocks) {
 			for(let blk of col.blocks) {
-				this.add(blk);
+				this.addOne(blk);
 			}
 		}
 		return this;
+	}
+	getBottomBlocks(): Block[] {
+		var bb: Block[] = [];
+		for(let cc of this.blocks.values()) {
+			bb.push(cc.base);
+		}
+		return bb;
 	}
 }
 
@@ -56,6 +69,9 @@ class ClusterColumn {
 		if(this.base === undefined || blk.slotIdx < this.base.slotIdx) {
 			this.base = blk;
 		}
+	}
+	has(blk: Block): boolean {
+		return this.blocks.has(blk);
 	}
 	remove(blk: Block) {
 		this.blocks.delete(blk);

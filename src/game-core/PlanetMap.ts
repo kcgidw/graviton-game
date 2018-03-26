@@ -14,7 +14,7 @@ export const PLANET_MAP: Map<string, IPlanetConfig> = new Map([
 
                 thrustIV: -0,
                 thrustAccel: -3,
-                maxThrust: -29,
+                maxThrust: -29.2,
                 thrustDur: 1 * 1000,
             },
             distribution: {

@@ -72,8 +72,8 @@ export class ClientFacade {
 		var logicH = this.board.dimensions.height;
 		var scale = (canvasW * targetBoardWidthRatio) / logicW;
 		this.boardContainer.scale = new PIXI.Point(scale, scale);
-		console.log('SCALE '+scale);
-		console.log(this.boardContainer.scale.x + ' ' + this.app.stage.scale.x);
+		// console.log('SCALE '+scale);
+		// console.log(this.boardContainer.scale.x + ' ' + this.app.stage.scale.x);
 
 		// reposition board
 		var leftMargin = (canvasW - this.boardContainer.width) / 2;

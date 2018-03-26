@@ -41,6 +41,7 @@ export class Block {
 	}
 
 	setType(type: BlockType): Block {
+		// console.log('block ' + this.id + ' was color ' + this.color);
 		this.type = type;
 
 		// clear matches
@@ -59,8 +60,15 @@ export class Block {
 
 	hasNormalMatch(other: Block): boolean {
 		if(this.type === BlockType.NORMAL && other.type === BlockType.NORMAL
-		&& this.color === other.color) {
-			return true;
+		&& this.color === other.color) { 
+			// same cluster
+			if(this.physics.cluster === other.physics.cluster) {
+				return true;
+			}
+			// account for chain-jumping
+			if(this.physics.forces.gravity === 0 && other.physics.forces.gravity === 0) {
+				return true;
+			}
 		}
 		return false;
 	}
