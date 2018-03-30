@@ -24,8 +24,8 @@ export class Board {
 	numColumns: number;
 	colors: BlockColor[] = [];
 
-	ground: BlockPhysics;
-	blocks: Block[][] = [];
+	ground: BlockPhysics;		// collision detection for ground
+	blocks: Block[][] = [];		// array grid of all blocks. [column][slot, i.e. block order]
 	blocksMap: any = {};		// maps id to block
 
 	spawnInterval: number;
@@ -36,14 +36,14 @@ export class Board {
 	blockId: number = 0;
 	clusterId: number = 0;
 
-	tick: number = 0;
+	// tick: number = 0;
 	time: number = 0;
 
 	lastRandomSpawnColumn: number;		// column where the board last randomly spawned a block
 
-	debugMaxBlocks: number;
+	debugMaxBlocks: number;		// # of blocks to spawn before stopping
 
-	isDirtyForMatches: boolean = false;
+	isDirtyForMatches: boolean = false;		// flag to check for possible new matches
 	compoundMatches: CompoundMatch[] = [];
 
 	constructor(engine: Round, planet: Planet, facade?: ClientFacade) {
@@ -116,21 +116,22 @@ export class Board {
 		}
 
 		if(this.isDirtyForMatches) {
-			this.compoundMatches = this.processMatches();
+			this.compoundMatches = this.findNewMatches();
 			if(this.compoundMatches) {
-				/* ignitions */
 				for(let comp of this.compoundMatches) {
+					// this.ignite(comp);
+
 					for(let blk of comp.blocks) {
 						blk.setType(BlockType.ROCKET);
 					}
 
-					let matchBottomBlks: Block[] = comp.getBottomBlocks();
-
 					// Whenever a cluster gets reignited, replace the cluster entirely.
 					// This more easily accomodates for chain-jumps.
+					// This also recalculates SlotCluster bases...
+						// TODO: consider making the base calculation more explicit
 					let newCluster = new SlotCluster(this, this.clusterId++, []);
 
-					for(let blk of matchBottomBlks) {
+					for(let blk of comp.getBottomBlocks()) {
 						let physics = blk.physics;
 						if(physics.cluster !== undefined && physics.cluster !== newCluster) {
 							newCluster.absorbCluster(physics.cluster);
@@ -214,8 +215,7 @@ export class Board {
 
 		this.processEscapedBlocks();	// TODO
 
-
-		this.tick++;
+		// this.tick++;
 	}
 
 	getRandomColumnIdx(): number {
@@ -381,7 +381,7 @@ export class Board {
 		return this.facade;
 	}
 
-	processMatches(): CompoundMatch[] {
+	findNewMatches(): CompoundMatch[] {
 		this.compoundMatches = [];
 
 		this.forEachBlock((blk) => {
@@ -487,5 +487,34 @@ export class Board {
 			console.log(compounds);
 		}
 		return compounds;
+	}
+
+	// not currently in use TODO
+	ignite(comp: CompoundMatch) {
+		let mainCluster: SlotCluster;
+
+		for(let blk of comp.blocks) {
+			blk.setType(BlockType.ROCKET);
+			mainCluster = mainCluster === undefined ? blk.physics.cluster : mainCluster;
+		}
+
+		mainCluster = mainCluster === undefined ? new SlotCluster(this, this.clusterId++, []) : mainCluster;
+
+		for(let blk of comp.getBottomBlocks()) {
+			let physics = blk.physics;
+			if(physics.cluster !== undefined && physics.cluster !== mainCluster) {
+				mainCluster.absorbCluster(physics.cluster);
+			} else if(physics.cluster === undefined) {
+				mainCluster.addBlockAndUp(blk);
+			}
+		}
+		
+		for(let blk of mainCluster.getBottomBlocks()) {
+			let physics = blk.physics;
+			physics.forces.gravity = 0;
+			physics.forces.thrust = this.planet.physics.thrustIV;
+			physics.forces.thrustAccelTimer = new Timer(this, () => {}, this.planet.physics.thrustDur, false)
+			.start();
+		}
 	}
 }

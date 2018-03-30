@@ -59,6 +59,8 @@ export class SlotCluster {
 }
 
 class ClusterColumn {
+	// TODO shouldn't this hold BlockPhysics, not Blocks?
+
 	blocks: Set<Block>;
 	base: Block;
 	constructor() {

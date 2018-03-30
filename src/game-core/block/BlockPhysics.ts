@@ -20,7 +20,7 @@ export class BlockPhysics {
 		thrustAccelTimer: undefined,
 	};
 
-	cluster: SlotCluster;
+	cluster: SlotCluster = undefined;
 
 	constructor(top: number, height: number, iv: number) {
 		this.topY = top;
