@@ -1,20 +1,27 @@
 import { Board } from "./Board";
+import { Round } from "./Round";
 
 export enum TimerState {NOT_STARTED, START, PAUSE, END}
 
 export class Timer {
+	round: Round;
+	board: Board;
+
 	state: TimerState = TimerState.NOT_STARTED;
 	time: number;
 	alarm: number;
-	board: Board;
 	action: ()=>any;
 	repeats: boolean = false;
 
 	constructor(board: Board, action: ()=>any, alarm: number, repeats?: boolean) {
+		this.round = board.engine;
 		this.board=  board;
+
 		this.action = action;
 		this.alarm = alarm;
 		this.repeats = repeats;
+
+		this.round.registerTimer(this);
 	}
 
 	step() {
@@ -54,6 +61,7 @@ export class Timer {
 	kill() {
 		this.state = TimerState.END;
 		this.time = undefined;
+		this.round.removeTimer(this);
 		return this;
 	}
 

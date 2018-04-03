@@ -1,12 +1,16 @@
 import { Block } from "./Block";
 import { Timer } from "../Timer";
 import { SlotCluster } from "../SlotCluster";
+import { Planet } from "../Planet";
+import { Board } from "../Board";
 
 /* Position, physics, and collision line
 AKA "Slots," not entirely coupled to blocks.
 Think of it as the wireframe of a block's position.
 */
 export class BlockPhysics {
+	planet: Planet;
+
 	topY: number;
 	height: number;
 	prevY: number;
@@ -22,7 +26,8 @@ export class BlockPhysics {
 
 	cluster: SlotCluster = undefined;
 
-	constructor(top: number, height: number, iv: number) {
+	constructor(planet: Planet, top: number, height: number, iv: number) {
+		this.planet = planet;
 		this.topY = top;
 		this.prevY = top;
 		this.height = height;
@@ -63,15 +68,16 @@ export class BlockPhysics {
 		return undefined;
 	}
 
-	// isRising(): boolean {
-	// 	return this.velocity > 0;
-	// }
 	isFalling(): boolean {
 		return this.prevY > this.topY;
 	}
-	// isStationary(): boolean {
-	// 	return this.velocity === 0;
-	// }
+
+	launch(board: Board) {
+		this.forces.gravity = 0;
+		this.forces.thrust = this.planet.physics.thrustIV;
+		this.forces.thrustAccelTimer = new Timer(board, () => {}, this.planet.physics.thrustDur, false)
+		.start();
+	}
 }
 
 export interface IForceInfo {

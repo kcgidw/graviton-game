@@ -3,6 +3,9 @@ import { SimpleMatch, CompoundMatch } from '../matches';
 import { BlockType } from './BlockType';
 import { Timer } from '../Timer';
 import { BlockPhysics } from './BlockPhysics';
+import { SlotCluster } from '../SlotCluster';
+import { Board } from '../Board';
+import { Planet } from '../Planet';
 
 export class Block {
 	static HEIGHT: number = 100;
@@ -22,10 +25,10 @@ export class Block {
 
 	matchInfo: IMatchInfo;
 
-	constructor(columnIdx: number, slotIdx: number, type: BlockType, id: number, iv: number) {
+	constructor(planet: Planet, columnIdx: number, slotIdx: number, type: BlockType, id: number, iv: number) {
 		this.columnIdx = columnIdx;
 		this.slotIdx = slotIdx;
-		this.physics = new BlockPhysics(Block.SPAWN_POSITION, Block.HEIGHT, iv);
+		this.physics = new BlockPhysics(planet, Block.SPAWN_POSITION, Block.HEIGHT, iv);
 		this.id = id;
 		this.type = type;
 	}
@@ -71,6 +74,16 @@ export class Block {
 			}
 		}
 		return false;
+	}
+
+	get y(): number {
+		return this.physics.topY;
+	}
+	get bottom() {
+		return this.physics.getBottom();
+	}
+	get cluster(): SlotCluster {
+		return this.physics.cluster;
 	}
 }
 export interface IMatchInfo {

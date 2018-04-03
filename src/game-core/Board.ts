@@ -57,7 +57,7 @@ export class Board {
 		}
 		this.facade = facade;
 
-		this.ground = new BlockPhysics(this.dimensions.getBottom(), Block.HEIGHT, 0);
+		this.ground = new BlockPhysics(this.planet, this.dimensions.getBottom(), Block.HEIGHT, 0);
 		// this.ground.velocity = 0;
 
 		this.spawner = new Timer(this, () => {
@@ -93,14 +93,14 @@ export class Board {
 	}
 	getBlockDirectBelow(block: Block): Block {
 		var res = this.getBlockBelow(block);
-		if(res && res.physics.topY === block.physics.getBottom()) {
+		if(res && res.y === block.bottom) {
 			return res;
 		}
 		return undefined;
 	}
 	getBlockDirectAbove(block: Block): Block {
 		var res = this.getBlockAbove(block);
-		if(res && res.physics.getBottom() === block.physics.topY) {
+		if(res && res.bottom === block.y) {
 			return res;
 		}
 		return undefined;
@@ -117,105 +117,103 @@ export class Board {
 
 		if(this.isDirtyForMatches) {
 			this.compoundMatches = this.findNewMatches();
-			if(this.compoundMatches) {
-				for(let comp of this.compoundMatches) {
-					// this.ignite(comp);
-
-					for(let blk of comp.blocks) {
-						blk.setType(BlockType.ROCKET);
-					}
-
-					// Whenever a cluster gets reignited, replace the cluster entirely.
-					// This more easily accomodates for chain-jumps.
-					// This also recalculates SlotCluster bases...
-						// TODO: consider making the base calculation more explicit
-					let newCluster = new SlotCluster(this, this.clusterId++, []);
-
-					for(let blk of comp.getBottomBlocks()) {
-						let physics = blk.physics;
-						if(physics.cluster !== undefined && physics.cluster !== newCluster) {
-							newCluster.absorbCluster(physics.cluster);
-						} else {
-							newCluster.addBlockAndUp(blk);
-						}
-					}
-					
-					for(let blk of newCluster.getBottomBlocks()) {
-						let physics = blk.physics;
-						physics.forces.gravity = 0;
-						physics.forces.thrust = this.planet.physics.thrustIV;
-						// physics.velocity = this.planet.physics.thrustIV;
-						physics.forces.thrustAccelTimer = new Timer(this, () => {}, this.planet.physics.thrustDur, false)
-						.start();
-					}
-				}
+			for(let comp of this.compoundMatches) {
+				this.launch(comp);
 			}
 			this.isDirtyForMatches = false;
 		}
 
-		/* block physics */
 		this.forEachBlock((block, colIdx, slotIdx) => {
-			var bp = block.physics;
-			var pp = this.planet.physics;
-			bp.contactBelowPrev = bp.contactBelow;
-
-			bp.forces.gravity += pp.gravity;
-			if(bp.forces.gravity > pp.maxGravity) {
-				bp.forces.gravity = pp.maxGravity;
-			}
-
-			if(bp.forces.thrustAccelTimer !== undefined) {
-				bp.forces.thrustAccelTimer.step();
-				if(bp.forces.thrustAccelTimer.state === TimerState.START) {
-					bp.forces.thrust += pp.thrustAccel;
-					if(bp.forces.thrust < pp.maxThrust) {
-						bp.forces.thrust = pp.maxThrust;
-					}
-				}
-			}
-
-			var velocity = bp.forces.gravity + bp.forces.thrust;
-			bp.prevY = bp.topY;
-			bp.topY += velocity * this.engine.BASE_LOGICAL_FPS / this.engine.fps;
-
-
-			var hitboxBelow: BlockPhysics;
-			var gravBelow: number;
-			if(slotIdx === 0) {
-				hitboxBelow = this.ground;
-				gravBelow = 0;
-			} else {
-				let blkBelow = this.blocks[block.columnIdx][slotIdx - 1];
-				hitboxBelow = blkBelow.physics;
-				// velBelow = blkBelow.physics.velocity;
-				gravBelow = blkBelow.physics.forces.gravity;
-			}
-			if(bp.collidesBelow(hitboxBelow)) {
-				bp.moveToContact(hitboxBelow);
-				bp.contactBelow = true;
-				bp.forces.gravity = gravBelow;
-				bp.forces.thrust = 0;
-				if(bp.forces.thrustAccelTimer) {
-					bp.forces.thrustAccelTimer.kill();
-				}
-				// bp.velocity = velBelow;
-				if(block.selectable === false) {
-					block.activateSelectable();
-				}
-				if(bp.contactBelowPrev === false) {
-					this.isDirtyForMatches = true;
-				}
-				if(hitboxBelow.cluster !== undefined) {
-					hitboxBelow.cluster.addOne(block);
-				}
-			} else if (! this.getBlockDirectBelow(block)) {
-				bp.contactBelow = false;
-			}
+			this.stepBlockPhysics(block);
 		});
 
 		this.processEscapedBlocks();	// TODO
 
 		// this.tick++;
+	}
+
+	stepBlockPhysics(block) {
+		var bp = block.physics;
+		var pp = this.planet.physics;
+		bp.contactBelowPrev = bp.contactBelow;
+
+		bp.forces.gravity += pp.gravity;
+		if(bp.forces.gravity > pp.maxGravity) {
+			bp.forces.gravity = pp.maxGravity;
+		}
+
+		// thrust
+		if(bp.forces.thrustAccelTimer !== undefined) {
+			bp.forces.thrustAccelTimer.step();
+			if(bp.forces.thrustAccelTimer.state === TimerState.START) {
+				bp.forces.thrust += pp.thrustAccel;
+				if(bp.forces.thrust < pp.maxThrust) {
+					bp.forces.thrust = pp.maxThrust;
+				}
+			}
+		}
+
+		// net movement
+		bp.prevY = bp.topY;
+		var velocity = bp.forces.gravity + bp.forces.thrust;
+		bp.topY += velocity * this.engine.BASE_LOGICAL_FPS / this.engine.fps;
+
+		var hitboxBelow: BlockPhysics;
+		var gravBelow: number;
+		if(block.slotIdx === 0) {		// ground collision
+			hitboxBelow = this.ground;
+			gravBelow = 0;
+		} else {
+			let blkBelow = this.blocks[block.columnIdx][block.slotIdx - 1];
+			hitboxBelow = blkBelow.physics;
+			// velBelow = blkBelow.physics.velocity;
+			gravBelow = blkBelow.physics.forces.gravity;
+		}
+		if(bp.collidesBelow(hitboxBelow)) {		// block collision
+			bp.moveToContact(hitboxBelow);
+			bp.contactBelow = true;
+			bp.forces.gravity = gravBelow;
+			bp.forces.thrust = 0;
+			if(bp.forces.thrustAccelTimer) {
+				bp.forces.thrustAccelTimer.kill();
+			}
+			if(block.selectable === false) {
+				block.activateSelectable();
+			}
+			if(bp.contactBelowPrev === false) {
+				this.isDirtyForMatches = true;
+			}
+			if(hitboxBelow.cluster !== undefined) {
+				hitboxBelow.cluster.addOne(block);
+			}
+		} else if (! this.getBlockDirectBelow(block)) {
+			bp.contactBelow = false;
+		}
+	}
+
+	launch(comp: CompoundMatch) {
+		for(let blk of comp.blocks) {
+			blk.setType(BlockType.ROCKET);
+		}
+
+		// Whenever a cluster gets reignited, replace the cluster entirely.
+		// This more easily accomodates for chain-jumps.
+		// This also recalculates SlotCluster bases...
+			// TODO: consider making the base calculation more explicit
+		let newCluster = new SlotCluster(this, this.clusterId++, []);
+
+		for(let blk of comp.getBottomBlocks()) {
+			let cluster = blk.cluster;
+			if(cluster !== undefined && cluster !== newCluster) {
+				newCluster.absorbCluster(cluster);
+			} else if(cluster === undefined) {
+				newCluster.addBlockAndUp(blk);
+			}
+		}
+		
+		for(let blk of newCluster.getBottomBlocks()) {
+			blk.physics.launch(this);
+		}
 	}
 
 	getRandomColumnIdx(): number {
@@ -245,7 +243,7 @@ export class Board {
 	spawnBlock(colIdx: number, color: BlockColor): Block {
 		var col: Block[] = this.blocks[colIdx];
 		var slotIdx = col.length;
-		var block: Block = new Block(colIdx, slotIdx, BlockType.NORMAL, this.blockId++, this.planet.physics.fallIV)
+		var block: Block = new Block(this.planet, colIdx, slotIdx, BlockType.NORMAL, this.blockId++, this.planet.physics.fallIV)
 			.setColor(color);
 		col.push(block);
 		this.blocksMap[block.id] = block;
@@ -342,11 +340,7 @@ export class Board {
 		var tmpA: Block = a;
 		var tmpASlotIdx: number = a.slotIdx;
 		var tmpAHitboxTop: number = a.physics.topY;
-		// var tmpAType: BlockType = a.type;
-		// var tmpAColor: BlockColor = a.color;
 		var tmpAPhysics = a.physics;
-		// var tmpAVel = a.physics.velocity;
-		// var tmpBVel = b.physics.velocity;
 
 		this.blocks[col][a.slotIdx] = b;
 		this.blocks[col][b.slotIdx] = tmpA;
@@ -355,13 +349,10 @@ export class Board {
 		b.slotIdx = tmpASlotIdx;
 
 		a.physics = b.physics;
-		// a.physics.velocity = tmpAVel;
 		b.physics = tmpAPhysics;
-		// b.physics.velocity = tmpBVel;
 
 		this.isDirtyForMatches = true;
-		console.log(a);
-		console.log(b);
+		console.log('swapped blocks ' + a.id + ' : ' + b.id);
 	}
 	swapUp(block: Block): void {
 		var other: Block =  this.getBlockDirectAbove(block);
@@ -487,34 +478,5 @@ export class Board {
 			console.log(compounds);
 		}
 		return compounds;
-	}
-
-	// not currently in use TODO
-	ignite(comp: CompoundMatch) {
-		let mainCluster: SlotCluster;
-
-		for(let blk of comp.blocks) {
-			blk.setType(BlockType.ROCKET);
-			mainCluster = mainCluster === undefined ? blk.physics.cluster : mainCluster;
-		}
-
-		mainCluster = mainCluster === undefined ? new SlotCluster(this, this.clusterId++, []) : mainCluster;
-
-		for(let blk of comp.getBottomBlocks()) {
-			let physics = blk.physics;
-			if(physics.cluster !== undefined && physics.cluster !== mainCluster) {
-				mainCluster.absorbCluster(physics.cluster);
-			} else if(physics.cluster === undefined) {
-				mainCluster.addBlockAndUp(blk);
-			}
-		}
-		
-		for(let blk of mainCluster.getBottomBlocks()) {
-			let physics = blk.physics;
-			physics.forces.gravity = 0;
-			physics.forces.thrust = this.planet.physics.thrustIV;
-			physics.forces.thrustAccelTimer = new Timer(this, () => {}, this.planet.physics.thrustDur, false)
-			.start();
-		}
 	}
 }
