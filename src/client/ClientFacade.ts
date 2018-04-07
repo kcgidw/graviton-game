@@ -102,7 +102,7 @@ export class ClientFacade {
 	addBlock(block: Block): BlockSprite {
 		// blocksprite's sprite width will start as 0 if texture is loaded on demand,
 		// causing draw mistakes. Make sure your stuff is pre-loaded
-		let spr: PIXI.Sprite = new PIXI.Sprite(PIXI.loader.resources[BlockColorUtil.colorToFilename(block.color)].texture);
+		let spr: PIXI.Sprite = new PIXI.Sprite(PIXI.loader.resources[BlockColorUtil.colorToFilename(block.substance.color)].texture);
 		// TODO preload texture http://www.html5gamedevs.com/topic/16019-preload-all-textures/
 		this.blocksContainer.addChild(spr);
 		let bs: BlockSprite = this.blockSprites.register(block, spr);

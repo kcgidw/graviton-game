@@ -6,6 +6,7 @@ import { BlockPhysics } from './BlockPhysics';
 import { SlotCluster } from '../SlotCluster';
 import { Board } from '../Board';
 import { Planet } from '../Planet';
+import { BlockSubstance } from './BlockSubstance';
 
 export class Block {
 	static HEIGHT: number = 100;
@@ -16,9 +17,7 @@ export class Block {
 	columnIdx: number;
 	slotIdx: number;
 
-	type: BlockType;
-	color: BlockColor;
-
+	substance: BlockSubstance;
 	physics: BlockPhysics;
 
 	selectable: boolean = false;	// can block be matched with other blocks
@@ -28,9 +27,9 @@ export class Block {
 	constructor(planet: Planet, columnIdx: number, slotIdx: number, type: BlockType, id: number, iv: number) {
 		this.columnIdx = columnIdx;
 		this.slotIdx = slotIdx;
-		this.physics = new BlockPhysics(planet, Block.SPAWN_POSITION, Block.HEIGHT, iv);
+		this.substance = new BlockSubstance(type);
+		this.physics = new BlockPhysics(this, planet, Block.SPAWN_POSITION, Block.HEIGHT, iv);
 		this.id = id;
-		this.type = type;
 	}
 
 	activateSelectable(): Block {
@@ -39,31 +38,18 @@ export class Block {
 	}
 
 	setColor(blockColor: BlockColor): Block {
-		this.color = blockColor;
+		this.substance.setColor(blockColor);
 		return this;
 	}
 
 	setType(type: BlockType): Block {
-		// console.log('block ' + this.id + ' was color ' + this.color);
-		this.type = type;
-
-		// clear matches
-		this.matchInfo = undefined;
-		
-		switch(type) {
-			case BlockType.NORMAL:
-				break;
-			case BlockType.GARBAGE:
-			case BlockType.ROCKET:
-				this.color = undefined;
-				break;
-		}
+		this.substance.setType(type);
+		this.matchInfo = undefined;	// clear matches
 		return this;
 	}
 
 	hasNormalMatch(other: Block): boolean {
-		if(this.type === BlockType.NORMAL && other.type === BlockType.NORMAL
-		&& this.color === other.color) { 
+		if(this.substance.type === BlockType.NORMAL && this.substance.matches(other.substance)) { 
 			// same cluster
 			if(this.physics.cluster === other.physics.cluster) {
 				return true;
@@ -72,6 +58,13 @@ export class Block {
 			if(this.physics.forces.gravity === 0 && other.physics.forces.gravity === 0) {
 				return true;
 			}
+		}
+		return false;
+	}
+
+	isBaseBlock(): boolean {
+		if(this.physics.cluster) {
+			return this.physics.cluster.getBottomBlocks().indexOf(this) !== -1;
 		}
 		return false;
 	}

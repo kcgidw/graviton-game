@@ -37,10 +37,10 @@ export class BlockSprite {
 		this.updateDebugText();
 	}
 	updateTexture() {
-		var type: BlockType = this.block.type;
+		var type: BlockType = this.block.substance.type;
 		switch(type) {
 			case BlockType.NORMAL:
-				this.sprite.texture = BlockColorUtil.colorToTexture(this.block.color);
+				this.sprite.texture = BlockColorUtil.colorToTexture(this.block.substance.color);
 				break;
 			case BlockType.ROCKET:
 			case BlockType.GARBAGE:

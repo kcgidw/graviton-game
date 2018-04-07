@@ -57,7 +57,7 @@ export class Board {
 		}
 		this.facade = facade;
 
-		this.ground = new BlockPhysics(this.planet, this.dimensions.getBottom(), Block.HEIGHT, 0);
+		this.ground = new BlockPhysics(undefined, this.planet, this.dimensions.getBottom(), Block.HEIGHT, 0);
 		// this.ground.velocity = 0;
 
 		this.spawner = new Timer(this, () => {
@@ -126,6 +126,15 @@ export class Board {
 		this.forEachBlock((block, colIdx, slotIdx) => {
 			this.stepBlockPhysics(block);
 		});
+		// this.forEachBlock((block, colIdx, slotIdx) => {
+		// 	var bp = block.physics;
+		// 	for(let att of bp.attachments) {
+		// 		att.topY = bp.topY;
+		// 	}
+		// });
+		this.forEachBlock((block, colIdx, slotIdx) => {
+			this.stepBlockCollision(block);
+		});
 
 		this.processEscapedBlocks();	// TODO
 
@@ -133,34 +142,23 @@ export class Board {
 	}
 
 	stepBlockPhysics(block) {
-		var bp = block.physics;
+		var bp: BlockPhysics = block.physics;
 		var pp = this.planet.physics;
 		bp.contactBelowPrev = bp.contactBelow;
-
-		bp.forces.gravity += pp.gravity;
-		if(bp.forces.gravity > pp.maxGravity) {
-			bp.forces.gravity = pp.maxGravity;
-		}
-
-		// thrust
-		if(bp.forces.thrustAccelTimer !== undefined) {
-			bp.forces.thrustAccelTimer.step();
-			if(bp.forces.thrustAccelTimer.state === TimerState.START) {
-				bp.forces.thrust += pp.thrustAccel;
-				if(bp.forces.thrust < pp.maxThrust) {
-					bp.forces.thrust = pp.maxThrust;
-				}
-			}
-		}
-
-		// net movement
+		
 		bp.prevY = bp.topY;
+		bp.calcVelocity();
 		var velocity = bp.forces.gravity + bp.forces.thrust;
-		bp.topY += velocity * this.engine.BASE_LOGICAL_FPS / this.engine.fps;
+		var displacement = velocity * this.engine.BASE_LOGICAL_FPS / this.engine.fps;
+		bp.topY += displacement;
+	}
 
+	stepBlockCollision(block: Block) {
+		var bp = block.physics;
 		var hitboxBelow: BlockPhysics;
 		var gravBelow: number;
-		if(block.slotIdx === 0) {		// ground collision
+
+		if(block.slotIdx === 0) {
 			hitboxBelow = this.ground;
 			gravBelow = 0;
 		} else {
@@ -169,7 +167,7 @@ export class Board {
 			// velBelow = blkBelow.physics.velocity;
 			gravBelow = blkBelow.physics.forces.gravity;
 		}
-		if(bp.collidesBelow(hitboxBelow)) {		// block collision
+		if(bp.collidesBelow(hitboxBelow)) {
 			bp.moveToContact(hitboxBelow);
 			bp.contactBelow = true;
 			bp.forces.gravity = gravBelow;
@@ -184,7 +182,11 @@ export class Board {
 				this.isDirtyForMatches = true;
 			}
 			if(hitboxBelow.cluster !== undefined) {
-				hitboxBelow.cluster.addOne(block);
+				if(bp.cluster !== undefined) {		// docking
+					hitboxBelow.cluster.absorbCluster(bp.cluster);
+				} else {		// single falling block onto a cluster
+					hitboxBelow.cluster.addOne(block);
+				}
 			}
 		} else if (! this.getBlockDirectBelow(block)) {
 			bp.contactBelow = false;
@@ -288,7 +290,7 @@ export class Board {
 			return undefined;
 		}
 		var blk: Block = col[slotIdx];
-		return blk ? blk.color : undefined;
+		return blk ? blk.substance.color : undefined;
 	}
 
 	// checks if placing a color at a certain columnXslot could create a natural match-3
@@ -348,6 +350,9 @@ export class Board {
 		a.slotIdx = b.slotIdx;
 		b.slotIdx = tmpASlotIdx;
 
+
+		a.physics.block = b;
+		b.physics.block = a;
 		a.physics = b.physics;
 		b.physics = tmpAPhysics;
 

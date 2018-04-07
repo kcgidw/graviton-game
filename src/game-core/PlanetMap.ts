@@ -18,11 +18,11 @@ export const PLANET_MAP: Map<string, IPlanetConfig> = new Map([
                 thrustDur: 1 * 1000,
             },
             distribution: {
-                YELLOW: 28,
-                RED: 25,
-                PURPLE: 25,
-                PINK: 12,
-                MINT: 10,
+                YELLOW: 23,
+                RED: 23,
+                PURPLE: 23,
+                PINK: 17,
+                MINT: 14,
             },
         }
     ],

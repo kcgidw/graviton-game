@@ -1,5 +1,5 @@
 import { Block } from "./Block";
-import { Timer } from "../Timer";
+import { Timer, TimerState } from "../Timer";
 import { SlotCluster } from "../SlotCluster";
 import { Planet } from "../Planet";
 import { Board } from "../Board";
@@ -15,6 +15,8 @@ export class BlockPhysics {
 	height: number;
 	prevY: number;
 
+	velocity: number;
+
 	contactBelow: boolean = false;	// is touching a solid directly below
 	contactBelowPrev: boolean = false;	// contactBelow for previous frame
 
@@ -26,7 +28,13 @@ export class BlockPhysics {
 
 	cluster: SlotCluster = undefined;
 
-	constructor(planet: Planet, top: number, height: number, iv: number) {
+	attachments: Set<BlockPhysics> = new Set();
+	attachedTo: BlockPhysics;
+
+	block: Block;
+
+	constructor(block: Block, planet: Planet, top: number, height: number, iv: number) {
+		this.block = block;
 		this.planet = planet;
 		this.topY = top;
 		this.prevY = top;
@@ -40,7 +48,7 @@ export class BlockPhysics {
 
 	collidesBelow(other: BlockPhysics|Block): boolean {
 		other = other instanceof Block ? other.physics : other;
-		if(this.getBottom() >= other.topY - 1) {
+		if(this.getBottom() >= other.topY) {
 			return true;
 		}
 		// does NOT check if this is completely below 'other'. For now, that should be impossible.
@@ -66,6 +74,37 @@ export class BlockPhysics {
 			return this.move(dist);
 		}
 		return undefined;
+	}
+
+	calcVelocity() {
+		var pp = this.planet.physics;
+
+		this.forces.gravity += pp.gravity;
+		if(this.forces.gravity > pp.maxGravity) {
+			this.forces.gravity = pp.maxGravity;
+		}
+
+		// thrust
+		if(this.forces.thrustAccelTimer !== undefined) {
+			this.forces.thrustAccelTimer.step();
+			if(this.forces.thrustAccelTimer.state === TimerState.START) {
+				this.forces.thrust += pp.thrustAccel;
+				if(this.forces.thrust < pp.maxThrust) {
+					this.forces.thrust = pp.maxThrust;
+				}
+			}
+		}
+
+		this.velocity = this.forces.gravity + this.forces.thrust;
+	}
+	
+	anchorTo(other: BlockPhysics) {
+		other.attachments.add(this);
+		this.attachedTo = other;
+	}
+	detachFrom(other: BlockPhysics) {
+		other.attachments.delete(this);
+		this.attachedTo = undefined;
 	}
 
 	isFalling(): boolean {
