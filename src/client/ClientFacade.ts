@@ -53,13 +53,17 @@ export class ClientFacade {
 		});
 		this.app.stage.on('pointerdown', (eventData) => {});
 		this.app.stage.on('pointermove', (eventData) => {
-			if(this.selectedBlock) {
+			if(this.selectedBlock !== undefined) {
 				var pointerCoordinates: PIXI.Point = eventData.data.getLocalPosition(this.boardContainer);
 				var pointerY: number = pointerCoordinates.y;
+				let swappedWith: Block;
 				if(pointerY < this.selectedBlock.block.physics.topY) {
-					this.board.swapUp(this.selectedBlock.block);
+					swappedWith = this.board.swapUp(this.selectedBlock.block);
 				} else if(pointerY > this.selectedBlock.block.physics.getBottom()) {
-					this.board.swapDown(this.selectedBlock.block);
+					swappedWith = this.board.swapDown(this.selectedBlock.block);
+				}
+				if(swappedWith) {
+					this.selectedBlock = this.blockSprites.get(swappedWith);
 				}
 			}
 		});
@@ -115,7 +119,8 @@ export class ClientFacade {
 
 	selectBlock(bs: BlockSprite): void {
 		this.selectedBlock = bs;
-		console.log(bs ? 'selected ' + this.selectedBlock.block.id : ' deselect');
+		if(bs) console.log('selected ' + this.selectedBlock.block.id);
+		// console.log(bs ? 'selected ' + this.selectedBlock.block.id : ' deselect');
 	}
 }
 

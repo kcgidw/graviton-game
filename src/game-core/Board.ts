@@ -10,6 +10,7 @@ import { Timer, TimerState } from './Timer';
 import { CompoundMatch, SimpleMatch } from './matches';
 import { BlockType } from './block/BlockType';
 import { SlotCluster } from './SlotCluster';
+import { BlockSubstance } from './block/BlockSubstance';
 
 /* TODO
 - Consider object pooling https://www.html5rocks.com/en/tutorials/speed/static-mem-pools/
@@ -58,7 +59,6 @@ export class Board {
 		this.facade = facade;
 
 		this.ground = new BlockPhysics(undefined, this.planet, this.dimensions.getBottom(), Block.HEIGHT, 0);
-		// this.ground.velocity = 0;
 
 		this.spawner = new Timer(this, () => {
 			var res = this.spawnBlockRandom();
@@ -70,10 +70,20 @@ export class Board {
 		console.log(this);
 	}
 
-	forEachBlock(fn: (block: Block, colIdx?: number, slotIdx?: number)=>any) {
+	forEachBlockByCol(fn: (block: Block, colIdx?: number, slotIdx?: number)=>any) {
 		for(let c=0; c<this.blocks.length; c++) {
 			for(let s=0; s<this.blocks[c].length; s++) {
 				fn(this.blocks[c][s], c, s);
+			}
+		}
+	}
+	forEachBlockByRow(fn: (block: Block, colIdx?: number, slotIdx?: number)=>any) {
+		for(let si=0; si<this.numRows; si++) {
+			for(let ci=0; ci<this.numColumns; ci++) {
+				let b = this.blocks[ci][si];
+				if(b !== undefined) {
+					fn(b, ci, si);
+				}
 			}
 		}
 	}
@@ -123,17 +133,18 @@ export class Board {
 			this.isDirtyForMatches = false;
 		}
 
-		this.forEachBlock((block, colIdx, slotIdx) => {
-			this.stepBlockPhysics(block);
+		this.forEachBlockByRow((block, colIdx, slotIdx) => {
+			block.physics.processedMovement = false;
+			block.physics.processedCollision = false;
+			block.physics.processedDock = false;
 		});
-		// this.forEachBlock((block, colIdx, slotIdx) => {
-		// 	var bp = block.physics;
-		// 	for(let att of bp.attachments) {
-		// 		att.topY = bp.topY;
-		// 	}
-		// });
-		this.forEachBlock((block, colIdx, slotIdx) => {
-			this.stepBlockCollision(block);
+		this.forEachBlockByRow((block, colIdx, slotIdx) => {
+			if(block.physics.processedMovement === false) {
+				let dist = this.stepBlockPhysics(block);
+			}
+		});
+		this.forEachBlockByRow((block, colIdx, slotIdx) => {
+			let dist = this.stepBlockCollision(block);
 		});
 
 		this.processEscapedBlocks();	// TODO
@@ -141,7 +152,7 @@ export class Board {
 		// this.tick++;
 	}
 
-	stepBlockPhysics(block) {
+	stepBlockPhysics(block): number {
 		var bp: BlockPhysics = block.physics;
 		var pp = this.planet.physics;
 		bp.contactBelowPrev = bp.contactBelow;
@@ -151,12 +162,17 @@ export class Board {
 		var velocity = bp.forces.gravity + bp.forces.thrust;
 		var displacement = velocity * this.engine.BASE_LOGICAL_FPS / this.engine.fps;
 		bp.topY += displacement;
+		
+		bp.processedMovement = true;
+
+		return displacement;
 	}
 
 	stepBlockCollision(block: Block) {
 		var bp = block.physics;
 		var hitboxBelow: BlockPhysics;
 		var gravBelow: number;
+		var dist = 0;
 
 		if(block.slotIdx === 0) {
 			hitboxBelow = this.ground;
@@ -168,7 +184,7 @@ export class Board {
 			gravBelow = blkBelow.physics.forces.gravity;
 		}
 		if(bp.collidesBelow(hitboxBelow)) {
-			bp.moveToContact(hitboxBelow);
+			dist = this.moveToContact(block, hitboxBelow);
 			bp.contactBelow = true;
 			bp.forces.gravity = gravBelow;
 			bp.forces.thrust = 0;
@@ -183,6 +199,7 @@ export class Board {
 			}
 			if(hitboxBelow.cluster !== undefined) {
 				if(bp.cluster !== undefined) {		// docking
+					bp.processedDock = true;
 					hitboxBelow.cluster.absorbCluster(bp.cluster);
 				} else {		// single falling block onto a cluster
 					hitboxBelow.cluster.addOne(block);
@@ -191,8 +208,19 @@ export class Board {
 		} else if (! this.getBlockDirectBelow(block)) {
 			bp.contactBelow = false;
 		}
+
+		return dist;
 	}
 
+	moveToContact(blk: BlockPhysics|Block, other: BlockPhysics|Block): number {
+		blk = blk instanceof Block ? blk.physics : blk;
+		other = other instanceof Block ? other.physics : other;
+		if(blk.collidesBelow(other)) {
+			let dist = other.topY - blk.getBottom();
+			return blk.move(dist);
+		}
+		return 0;
+	}
 	launch(comp: CompoundMatch) {
 		for(let blk of comp.blocks) {
 			blk.setType(BlockType.ROCKET);
@@ -338,38 +366,27 @@ export class Board {
 			return;
 		}
 
-		var col = a.columnIdx;
-		var tmpA: Block = a;
-		var tmpASlotIdx: number = a.slotIdx;
-		var tmpAHitboxTop: number = a.physics.topY;
-		var tmpAPhysics = a.physics;
-
-		this.blocks[col][a.slotIdx] = b;
-		this.blocks[col][b.slotIdx] = tmpA;
-
-		a.slotIdx = b.slotIdx;
-		b.slotIdx = tmpASlotIdx;
-
-
-		a.physics.block = b;
-		b.physics.block = a;
-		a.physics = b.physics;
-		b.physics = tmpAPhysics;
+		var asubs: BlockSubstance = a.substance;
+		a.substance = b.substance;
+		b.substance = asubs;
 
 		this.isDirtyForMatches = true;
 		console.log('swapped blocks ' + a.id + ' : ' + b.id);
+
 	}
-	swapUp(block: Block): void {
+	swapUp(block: Block): Block {
 		var other: Block =  this.getBlockDirectAbove(block);
 		if(other) {
 			this.swapBlocks(block,other);
 		}
+		return other;
 	}
-	swapDown(block: Block): void {
+	swapDown(block: Block): Block {
 		var other: Block =  this.getBlockDirectBelow(block);
 		if(other) {
 			this.swapBlocks(block,other);
 		}
+		return other;
 	}
 
 	setFacade(facade: ClientFacade): ClientFacade {
@@ -380,7 +397,7 @@ export class Board {
 	findNewMatches(): CompoundMatch[] {
 		this.compoundMatches = [];
 
-		this.forEachBlock((blk) => {
+		this.forEachBlockByRow((blk) => {
 			blk.matchInfo = undefined;
 		});
 
@@ -477,11 +494,11 @@ export class Board {
 			if(compounds.indexOf(comp) === -1) {
 				compounds.push(comp);
 			}
+
+			blk.physics.fusion = comp;
 		}
 
-		if(compounds.length > 0) {		// any matches this step?
-			console.log(compounds);
-		}
+		// if(compounds.length > 0) console.log(compounds);
 		return compounds;
 	}
 }

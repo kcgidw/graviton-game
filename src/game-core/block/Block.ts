@@ -41,7 +41,7 @@ export class Block {
 		this.substance.setColor(blockColor);
 		return this;
 	}
-
+	
 	setType(type: BlockType): Block {
 		this.substance.setType(type);
 		this.matchInfo = undefined;	// clear matches

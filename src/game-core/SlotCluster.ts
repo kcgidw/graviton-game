@@ -36,8 +36,6 @@ export class SlotCluster {
 		}
 
 		blk.physics.cluster = this;
-
-		this.updateAnchor();
 	}
 	remove(blk: Block) {
 		var coli = blk.columnIdx;
@@ -67,14 +65,6 @@ export class SlotCluster {
 			bb.push(cc.base.block);
 		}
 		return bb;
-	}
-	updateAnchor() {
-		this.anchor = this.getBottomBlocks()[0];
-		var bottoms: Block[] = this.getBottomBlocks();
-		bottoms.shift();
-		for(let b of bottoms) {
-			b.physics.anchorTo(this.anchor.physics);
-		}
 	}
 }
 

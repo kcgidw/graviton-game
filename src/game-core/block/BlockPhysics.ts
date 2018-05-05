@@ -3,11 +3,9 @@ import { Timer, TimerState } from "../Timer";
 import { SlotCluster } from "../SlotCluster";
 import { Planet } from "../Planet";
 import { Board } from "../Board";
+import { CompoundMatch } from "../matches";
 
-/* Position, physics, and collision line
-AKA "Slots," not entirely coupled to blocks.
-Think of it as the wireframe of a block's position.
-*/
+/* Position, physics, and collision line */
 export class BlockPhysics {
 	planet: Planet;
 
@@ -15,10 +13,12 @@ export class BlockPhysics {
 	height: number;
 	prevY: number;
 
-	velocity: number;
 
 	contactBelow: boolean = false;	// is touching a solid directly below
 	contactBelowPrev: boolean = false;	// contactBelow for previous frame
+	processedMovement: boolean = false;
+	processedCollision: boolean = false;
+	processedDock: boolean = false;
 
 	forces: IForceInfo = {
 		gravity: 0,
@@ -27,9 +27,7 @@ export class BlockPhysics {
 	};
 
 	cluster: SlotCluster = undefined;
-
-	attachments: Set<BlockPhysics> = new Set();
-	attachedTo: BlockPhysics;
+	fusion: CompoundMatch = undefined;
 
 	block: Block;
 
@@ -67,14 +65,6 @@ export class BlockPhysics {
 		this.topY += dist;		// positive dist => move down
 		return this.topY;
 	}
-	moveToContact(other: BlockPhysics|Block): number {
-		other = other instanceof Block ? other.physics : other;
-		if(this.collidesBelow(other)) {
-			let dist = other.topY - this.getBottom();
-			return this.move(dist);
-		}
-		return undefined;
-	}
 
 	calcVelocity() {
 		var pp = this.planet.physics;
@@ -94,19 +84,8 @@ export class BlockPhysics {
 				}
 			}
 		}
-
-		this.velocity = this.forces.gravity + this.forces.thrust;
 	}
 	
-	anchorTo(other: BlockPhysics) {
-		other.attachments.add(this);
-		this.attachedTo = other;
-	}
-	detachFrom(other: BlockPhysics) {
-		other.attachments.delete(this);
-		this.attachedTo = undefined;
-	}
-
 	isFalling(): boolean {
 		return this.prevY > this.topY;
 	}
